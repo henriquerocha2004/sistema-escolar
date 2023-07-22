@@ -72,10 +72,13 @@ func (s *TestClassRoomSuit) TestShouldCreateClassRoom() {
 		Level:           "1 ANO",
 		Identification:  "1AS",
 		SchoolYearId:    schoolYear.Id,
-		RoomId:          room.Id,
-		ScheduleId:      schedule.Id,
-		Localization:    "any location",
-		Type:            "Presencial",
+		RoomId: uuid.NullUUID{
+			UUID:  room.Id,
+			Valid: false,
+		},
+		ScheduleId:   schedule.Id,
+		Localization: "any location",
+		Type:         "Presencial",
 	}
 
 	err := s.repository.Create(classRoom)
@@ -97,9 +100,12 @@ func (s *TestClassRoomSuit) TestShouldUpdateClassRoom() {
 		Level:           "1 ANO",
 		Identification:  "1AS",
 		SchoolYearId:    schoolYear.Id,
-		RoomId:          room.Id,
-		ScheduleId:      schedule.Id,
-		Localization:    "any location",
+		RoomId: uuid.NullUUID{
+			UUID:  room.Id,
+			Valid: false,
+		},
+		ScheduleId:   schedule.Id,
+		Localization: "any location",
 	}
 
 	err := s.repository.Create(classRoom)
@@ -133,9 +139,12 @@ func (s *TestClassRoomSuit) TestShouldDeleteClassRoom() {
 		Level:           "1 ANO",
 		Identification:  "1AS",
 		SchoolYearId:    schoolYear.Id,
-		RoomId:          room.Id,
-		ScheduleId:      schedule.Id,
-		Localization:    "any location",
+		RoomId: uuid.NullUUID{
+			UUID:  room.Id,
+			Valid: false,
+		},
+		ScheduleId:   schedule.Id,
+		Localization: "any location",
 	}
 
 	err := s.repository.Create(classRoom)
