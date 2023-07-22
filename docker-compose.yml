@@ -1,0 +1,20 @@
+version: '3.9'
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "3000:3000" 
+    volumes:
+        - .:/opt/app/api:rw
+    command: air ./cmd/api/main.go   
+  database:
+    image: postgres:alpine3.18
+    container_name: app-database
+    ports:
+      - "9500:5432"
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
