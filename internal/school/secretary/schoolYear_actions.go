@@ -15,16 +15,16 @@ type SchoolYearActionsInterface interface {
 	Delete(id string) error
 	Update(id string, dto dto.SchoolYearRequestDto) error
 	FindOne(id string) (*entities.SchoolYear, error)
-	FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.SchoolYear, error)
+	FindAll(dtoRequest dto.PaginatorRequest) (*common.SchoolYearPaginationResult, error)
 }
 
 type SchoolYearActions struct {
 	repository SchoolYearRepository
 }
 
-func NewSchoolYearActions(respository SchoolYearRepository) *SchoolYearActions {
+func NewSchoolYearActions(repository SchoolYearRepository) *SchoolYearActions {
 	return &SchoolYearActions{
-		repository: respository,
+		repository: repository,
 	}
 }
 
@@ -90,14 +90,14 @@ func (s *SchoolYearActions) FindOne(id string) (*entities.SchoolYear, error) {
 	return schoolYear, nil
 }
 
-func (s *SchoolYearActions) FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.SchoolYear, error) {
+func (s *SchoolYearActions) FindAll(dtoRequest dto.PaginatorRequest) (*common.SchoolYearPaginationResult, error) {
 	paginator := common.Pagination{}
 	paginator.FillFromDto(dtoRequest)
-	schoolYears, err := s.repository.FindAll(paginator)
+	paginationResult, err := s.repository.FindAll(paginator)
 	if err != nil {
 		log.Println(err)
 		return nil, errors.New("failed to get school years")
 	}
 
-	return schoolYears, nil
+	return paginationResult, nil
 }

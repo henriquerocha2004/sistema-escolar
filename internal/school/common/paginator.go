@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
+
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 )
 
@@ -41,9 +43,7 @@ func (p *Pagination) FiltersInSql() string {
 	query := ""
 
 	if len(p.ColumnSearch) > 0 {
-		for _, column := range p.ColumnSearch {
-			query += fmt.Sprintf(" AND %s = '%s' ", column.Column, column.Value)
-		}
+		query += p.GetColumnFilter()
 	}
 
 	if p.Sort != "" && p.SortField != "" {
@@ -62,4 +62,26 @@ func (p *Pagination) FiltersInSql() string {
 	}
 
 	return query
+}
+
+func (p *Pagination) GetColumnFilter() string {
+	var query string
+
+	if len(p.ColumnSearch) > 0 {
+		for _, column := range p.ColumnSearch {
+			query += fmt.Sprintf(" AND %s = '%s' ", column.Column, column.Value)
+		}
+	}
+
+	return query
+}
+
+type SchoolYearPaginationResult struct {
+	Total       int `json:"total"`
+	SchoolYears []entities.SchoolYear
+}
+
+type ServicePaginationResult struct {
+	Total    int `json:"total"`
+	Services []entities.Service
 }

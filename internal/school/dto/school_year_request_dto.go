@@ -8,7 +8,7 @@ import (
 type SchoolYearRequestDto struct {
 	Id        string `json:"id,omitempty"`
 	Year      string `json:"year" validate:"required"`
-	StartedAt string `json:"started_at" validate:"required,date::format:yyyy-mm-dd"`
+	StartedAt string `json:"start_at" validate:"required,date::format:yyyy-mm-dd"`
 	EndAt     string `json:"end_at" validate:"required,date::format:yyyy-mm-dd"`
 }
 

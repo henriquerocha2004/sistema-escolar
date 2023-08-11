@@ -38,5 +38,5 @@ type SchoolYearRepository interface {
 	Update(schoolYear entities.SchoolYear) error
 	FindById(id string) (*entities.SchoolYear, error)
 	FindByYear(year string) (*entities.SchoolYear, error)
-	FindAll(paginator common.Pagination) (*[]entities.SchoolYear, error)
+	FindAll(paginator common.Pagination) (*common.SchoolYearPaginationResult, error)
 }

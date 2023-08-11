@@ -2,7 +2,6 @@ SHELL := /bin/bash
 USER_DB=root
 PASS_DB=root
 HOST=app-database
-#DSN=$(USER_DB):$(PASS_DB)@tcp(app-database:5432)/sistema-escolar
 DSN=host=$(HOST) port=5432 user=$(USER_DB) password=$(PASS_DB)  dbname=sistema-escolar
 
 create-migration:

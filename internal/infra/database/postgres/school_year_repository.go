@@ -3,8 +3,9 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
@@ -111,7 +112,7 @@ func (s *SchoolYearRepository) FindByYear(year string) (*entities.SchoolYear, er
 	return &schoolYear, nil
 }
 
-func (s *SchoolYearRepository) FindAll(paginator common.Pagination) (*[]entities.SchoolYear, error) {
+func (s *SchoolYearRepository) FindAll(paginator common.Pagination) (*common.SchoolYearPaginationResult, error) {
 	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelQuery()
 
@@ -148,5 +149,39 @@ func (s *SchoolYearRepository) FindAll(paginator common.Pagination) (*[]entities
 		schoolYears = append(schoolYears, schoolYear)
 	}
 
-	return &schoolYears, nil
+	var total int
+	queryCount := "SELECT COUNT(*) as total FROM school_year WHERE year like $1 AND deleted_at IS NULL"
+	columnFilter := paginator.GetColumnFilter()
+	if columnFilter != "" {
+		queryCount += columnFilter
+	}
+
+	stmtCount, err := s.db.PrepareContext(ctx, queryCount)
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmtCount.Close()
+
+	rows, err = stmtCount.QueryContext(ctx,
+		"%"+paginator.Search+"%",
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&total)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	paginationResult := common.SchoolYearPaginationResult{
+		Total:       total,
+		SchoolYears: schoolYears,
+	}
+
+	return &paginationResult, nil
 }

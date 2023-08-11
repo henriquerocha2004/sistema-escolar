@@ -7,7 +7,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 )
 
@@ -16,7 +15,6 @@ type ScheduleClass struct {
 	Description string    `json:"description"`
 	Schedule    string    `json:"schedule"`
 	SchoolYear  uuid.UUID `json:"school_year"`
-	common.Timestamps
 }
 
 func (s *ScheduleClass) FillFromDto(dto dto.ScheduleRequestDto) error {

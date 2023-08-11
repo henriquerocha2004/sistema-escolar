@@ -1,14 +1,20 @@
 package presenters
 
 import (
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 )
 
+type WebSchoolYearPaginationResultPresenter struct {
+	Total       int                      `json:"total"`
+	SchoolYears []WebSchoolYearPresenter `json:"school_years"`
+}
+
 type WebSchoolYearPresenter struct {
-	Id        string
-	Year      string
-	StartedAt string
-	EndAt     string
+	Id        string `json:"id"`
+	Year      string `json:"year"`
+	StartedAt string `json:"start_at"`
+	EndAt     string `json:"end_at"`
 }
 
 func (w *WebSchoolYearPresenter) FillSingleSchoolYearPresenter(schoolYear entities.SchoolYear) *WebSchoolYearPresenter {
@@ -20,13 +26,14 @@ func (w *WebSchoolYearPresenter) FillSingleSchoolYearPresenter(schoolYear entiti
 	}
 }
 
-func (w *WebSchoolYearPresenter) FillMultipleSchoolYearPresenter(schoolYears []entities.SchoolYear) *[]WebSchoolYearPresenter {
+func (w *WebSchoolYearPresenter) FillMultipleSchoolYearPresenter(paginationResult common.SchoolYearPaginationResult) WebSchoolYearPaginationResultPresenter {
 
-	var presenters []WebSchoolYearPresenter
+	var presenter WebSchoolYearPaginationResultPresenter
+	presenter.Total = paginationResult.Total
 
-	for _, s := range schoolYears {
-		presenters = append(presenters, *w.FillSingleSchoolYearPresenter(s))
+	for _, s := range paginationResult.SchoolYears {
+		presenter.SchoolYears = append(presenter.SchoolYears, *w.FillSingleSchoolYearPresenter(s))
 	}
 
-	return &presenters
+	return presenter
 }

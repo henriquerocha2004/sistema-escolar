@@ -2,7 +2,7 @@ package dto
 
 import (
 	"github.com/go-playground/validator"
-	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
+	requestValidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 )
 
 type ClassRoomRequestDto struct {
@@ -20,9 +20,9 @@ type ClassRoomRequestDto struct {
 
 func (c *ClassRoomRequestDto) Validate() error {
 	v := validator.New()
-	_ = v.RegisterValidation("shift", requestvalidator.ValidateShift)
-	_ = v.RegisterValidation("type", requestvalidator.ValidateType)
-	_ = v.RegisterValidation("status", requestvalidator.ValidateClassStatus)
+	_ = v.RegisterValidation("shift", requestValidator.ValidateShift)
+	_ = v.RegisterValidation("type", requestValidator.ValidateType)
+	_ = v.RegisterValidation("status", requestValidator.ValidateClassStatus)
 
 	return v.Struct(c)
 }

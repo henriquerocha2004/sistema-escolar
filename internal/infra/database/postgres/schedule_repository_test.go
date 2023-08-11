@@ -46,6 +46,10 @@ func (s *TestScheduleRoomSuit) AfterTest(suiteName, testName string) {
 	s.testTools.RefreshDatabase()
 }
 
+func (s *TestScheduleRoomSuit) TearDownSuite() {
+	_ = s.connection.Close()
+}
+
 func TestManagerScheduleRoom(t *testing.T) {
 	connection := Connect()
 	suite.Run(t, newTestScheduleRunRepository(connection, testtools.NewTestDatabaseOperations(connection)))

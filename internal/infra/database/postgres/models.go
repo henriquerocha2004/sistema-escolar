@@ -67,3 +67,11 @@ type SchoolYear struct {
 	UpdatedAt sql.NullTime `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
+
+type Service struct {
+	ID          uuid.UUID    `json:"id"`
+	Description string       `json:"description"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	UpdatedAt   sql.NullTime `json:"updated_at"`
+	DeletedAt   sql.NullTime `json:"deleted_at"`
+}

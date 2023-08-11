@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"time"
 
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 )
 
@@ -15,7 +14,6 @@ type SchoolYear struct {
 	Year      string     `json:"year"`
 	StartedAt *time.Time `json:"started_at"`
 	EndAt     *time.Time `json:"end_at"`
-	common.Timestamps
 }
 
 func (s *SchoolYear) CheckPeriod() error {

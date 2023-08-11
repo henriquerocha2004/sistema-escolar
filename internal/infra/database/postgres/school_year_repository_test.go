@@ -45,6 +45,10 @@ func (s *TestSchoolYearSuit) AfterTest(suiteName, testName string) {
 	s.testTools.RefreshDatabase()
 }
 
+func (s *TestSchoolYearSuit) TearDownSuite() {
+	_ = s.connection.Close()
+}
+
 func TestManagerSchoolYear(t *testing.T) {
 	connection := Connect()
 	suite.Run(t, newTestSchoolYearSuit(connection, testtools.NewTestDatabaseOperations(connection)))
@@ -136,7 +140,7 @@ func (s *TestSchoolYearSuit) TestShouldFindSchoolYearById() {
 	paginator.Sort = "asc"
 	paginator.SetPage(1)
 
-	schoolYears, err := s.repository.FindAll(paginator)
+	paginationResult, err := s.repository.FindAll(paginator)
 	s.Assert().NoError(err)
-	s.Assert().Equal(1, len(*schoolYears))
+	s.Assert().Equal(1, len(paginationResult.SchoolYears))
 }

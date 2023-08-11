@@ -5,6 +5,7 @@ import (
 
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/http/controllers"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary"
 )
 
@@ -15,16 +16,19 @@ type ContainerDependency struct {
 	schoolYearRepository secretary.SchoolYearRepository
 	scheduleRepository   secretary.ScheduleRoomRepository
 	classRoomRepository  secretary.ClassRoomRepository
+	serviceRepository    financial.ServiceRepository
 
 	roomActions         secretary.RoomActionsInterface
 	schoolYearActions   secretary.SchoolYearActionsInterface
 	scheduleRoomActions secretary.ScheduleActionsInterface
 	classRoomActions    secretary.ClassRoomActionsInterface
+	serviceActions      financial.ServiceActionsInterface
 
 	roomController          *controllers.RoomController
 	schoolYearController    *controllers.SchoolYearController
 	scheduleClassController *controllers.ScheduleController
 	classRoomController     *controllers.ClassRoomController
+	serviceController       *controllers.ServiceController
 }
 
 func (c *ContainerDependency) GetDB() *sql.DB {
@@ -77,6 +81,16 @@ func (c *ContainerDependency) GetClassRoomRepository() *secretary.ClassRoomRepos
 	return &c.classRoomRepository
 }
 
+func (c *ContainerDependency) GetServiceRepository() *financial.ServiceRepository {
+	if c.serviceRepository == nil {
+		c.serviceRepository = postgres.NewServiceRepository(
+			c.GetDB(),
+		)
+	}
+
+	return &c.serviceRepository
+}
+
 // Actions
 
 func (c *ContainerDependency) GetRoomActions() secretary.RoomActionsInterface {
@@ -120,6 +134,16 @@ func (c *ContainerDependency) GetClassRoomActions() secretary.ClassRoomActionsIn
 	return c.classRoomActions
 }
 
+func (c *ContainerDependency) GetServiceActions() financial.ServiceActionsInterface {
+	if c.serviceActions == nil {
+		c.serviceActions = financial.NewServiceActions(
+			*c.GetServiceRepository(),
+		)
+	}
+
+	return c.serviceActions
+}
+
 // Controllers
 
 func (c *ContainerDependency) GetRoomController() *controllers.RoomController {
@@ -160,4 +184,14 @@ func (c *ContainerDependency) GetClassRoomController() *controllers.ClassRoomCon
 	}
 
 	return c.classRoomController
+}
+
+func (c *ContainerDependency) GetServiceController() *controllers.ServiceController {
+	if c.serviceController == nil {
+		c.serviceController = controllers.NewServiceController(
+			c.GetServiceActions(),
+		)
+	}
+
+	return c.serviceController
 }

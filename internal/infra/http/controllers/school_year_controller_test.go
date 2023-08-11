@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -29,7 +30,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryParamsInCreateSchoolYear(t *testi
 			Endpoint:             "/room",
 			Method:               "POST",
 			Description:          "when school year is not provided",
-			Data:                 `{"year": "", "started_at":"2020-01-01", "end_at" : "2020-12-20"}`,
+			Data:                 `{"year": "", "start_at":"2020-01-01", "end_at" : "2020-12-20"}`,
 			ExpectedCodeResponse: 400,
 			ExpectedErrorMessage: "Failed to validate data",
 		},
@@ -37,7 +38,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryParamsInCreateSchoolYear(t *testi
 			Endpoint:             "/room",
 			Method:               "POST",
 			Description:          "when started_at is not provided",
-			Data:                 `{"year": "2020", "started_at":"", "end_at" : "2020-12-20"}`,
+			Data:                 `{"year": "2020", "start_at":"", "end_at" : "2020-12-20"}`,
 			ExpectedCodeResponse: 400,
 			ExpectedErrorMessage: "Failed to validate data",
 		},
@@ -45,7 +46,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryParamsInCreateSchoolYear(t *testi
 			Endpoint:             "/room",
 			Method:               "POST",
 			Description:          "when end_at is not provided",
-			Data:                 `{"year": "2020", "started_at":"2020-01-01", "end_at" : ""}`,
+			Data:                 `{"year": "2020", "start_at":"2020-01-01", "end_at" : ""}`,
 			ExpectedCodeResponse: 400,
 			ExpectedErrorMessage: "Failed to validate data",
 		},
@@ -75,7 +76,7 @@ func TestShouldCreateSchoolYearWithSuccess(t *testing.T) {
 
 	app := fiber.New()
 	app.Post("/school-year", schoolYearController.Create)
-	data := `{"year": "2020","started_at":"2020-01-01","end_at":"2020-12-20"}`
+	data := `{"year": "2020","start_at":"2020-01-01","end_at":"2020-12-20"}`
 	request := httptest.NewRequest("POST", "/school-year", bytes.NewReader([]byte(data)))
 	request.Header.Set("Content-Type", "application/json")
 	response, _ := app.Test(request)
@@ -104,7 +105,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryDataInUpdateSchoolYear(t *testing
 			Method:               "PUT",
 			Param:                "/school-year/1da90050-e182-4551-923d-2c60f72b545a",
 			Description:          "when year is not provided",
-			Data:                 `{"year": "", "started_at":"2020-01-01", "end_at" : "2020-12-20"}`,
+			Data:                 `{"year": "", "start_at":"2020-01-01", "end_at" : "2020-12-20"}`,
 			ExpectedCodeResponse: 400,
 			ExpectedErrorMessage: "Failed to validate data",
 		},
@@ -113,7 +114,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryDataInUpdateSchoolYear(t *testing
 			Method:               "PUT",
 			Param:                "/school-year/1da90050-e182-4551-923d-2c60f72b545a",
 			Description:          "when started_at is not provided",
-			Data:                 `{"year": "2020", "started_at":"", "end_at" : "2020-12-20"}`,
+			Data:                 `{"year": "2020", "start_at":"", "end_at" : "2020-12-20"}`,
 			ExpectedCodeResponse: 400,
 			ExpectedErrorMessage: "Failed to validate data",
 		},
@@ -122,7 +123,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryDataInUpdateSchoolYear(t *testing
 			Method:               "PUT",
 			Param:                "/school-year/1da90050-e182-4551-923d-2c60f72b545a",
 			Description:          "when end_at is not provided",
-			Data:                 `{"year": "2020", "started_at":"2020-01-01", "end_at" : ""}`,
+			Data:                 `{"year": "2020", "start_at":"2020-01-01", "end_at" : ""}`,
 			ExpectedCodeResponse: 400,
 			ExpectedErrorMessage: "Failed to validate data",
 		},
@@ -149,7 +150,7 @@ func TestShouldUpdateSchoolYearWithSuccess(t *testing.T) {
 	actionSchoolYear := new(mocks.SchoolYearActionsMock)
 	actionSchoolYear.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("dto.SchoolYearRequestDto")).Return(nil)
 	schoolYearroomController := NewSchoolYearController(actionSchoolYear)
-	data := `{"year": "2020", "started_at":"2020-01-01", "end_at" : "2020-12-20"}`
+	data := `{"year": "2020", "start_at":"2020-01-01", "end_at" : "2020-12-20"}`
 	app := fiber.New()
 	app.Put("/school-year/:id", schoolYearroomController.Update)
 	request := httptest.NewRequest("PUT", "/school-year/1da90050-e182-4551-923d-2c60f72b545a", bytes.NewReader([]byte(data)))
@@ -158,6 +159,7 @@ func TestShouldUpdateSchoolYearWithSuccess(t *testing.T) {
 	var m map[string]interface{}
 	_ = json.NewDecoder(response.Body).Decode(&m)
 	response.Body.Close()
+	fmt.Println(m)
 	assert.Equal(t, 200, response.StatusCode)
 	assert.Equal(t, "school year updated with success", m["message"])
 }

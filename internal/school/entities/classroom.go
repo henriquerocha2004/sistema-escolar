@@ -3,7 +3,6 @@ package entities
 import (
 	"errors"
 	"github.com/google/uuid"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 	"time"
 )
@@ -22,7 +21,6 @@ type ClassRoom struct {
 	ScheduleId      uuid.UUID     `json:"schedule_id"`
 	Localization    string        `json:"localization"`
 	Type            string        `json:"type"`
-	common.Timestamps
 }
 
 func (c *ClassRoom) SetOccupiedVacancies(quantity int) error {
