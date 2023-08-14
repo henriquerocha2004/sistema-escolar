@@ -10,7 +10,7 @@ type ClassRoomRepository interface {
 	Create(classRoom entities.ClassRoom) error
 	Delete(id string) error
 	Update(classRoom entities.ClassRoom) error
-	FindAll(pagination common.Pagination) (*[]entities.ClassRoom, error)
+	FindAll(pagination common.Pagination) (*common.ClassRoomPaginationResult, error)
 	FindById(id string) (*entities.ClassRoom, error)
 }
 
@@ -19,7 +19,7 @@ type RoomRepository interface {
 	Delete(id string) error
 	Update(room entities.Room) error
 	FindByCode(code string) (*entities.Room, error)
-	FindAll(pagination common.Pagination) (*[]entities.Room, error)
+	FindAll(pagination common.Pagination) (*common.RoomPaginationResult, error)
 	FindById(id string) (*entities.Room, error)
 	SyncSchedule(scheduleDto dto.RoomScheduleDto) error
 }
@@ -29,7 +29,7 @@ type ScheduleRoomRepository interface {
 	Delete(id string) error
 	Update(schedule entities.ScheduleClass) error
 	FindById(id string) (*entities.ScheduleClass, error)
-	FindAll(paginator common.Pagination) (*[]entities.ScheduleClass, error)
+	FindAll(paginator common.Pagination) (*common.SchedulePaginationResult, error)
 }
 
 type SchoolYearRepository interface {

@@ -19,7 +19,7 @@ type ClassRoomActionsInterface interface {
 	Delete(id string) error
 	Update(id string, requestDto dto.ClassRoomRequestDto) error
 	Find(id string) (*entities.ClassRoom, error)
-	FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.ClassRoom, error)
+	FindAll(dtoRequest dto.PaginatorRequest) (*common.ClassRoomPaginationResult, error)
 }
 
 func NewClassRoomActions(repository ClassRoomRepository) *ClassRoomActions {
@@ -77,7 +77,7 @@ func (c *ClassRoomActions) Find(id string) (*entities.ClassRoom, error) {
 	return classRoom, nil
 }
 
-func (c *ClassRoomActions) FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.ClassRoom, error) {
+func (c *ClassRoomActions) FindAll(dtoRequest dto.PaginatorRequest) (*common.ClassRoomPaginationResult, error) {
 	paginator := common.Pagination{}
 	paginator.FillFromDto(dtoRequest)
 	classRooms, err := c.repository.FindAll(paginator)

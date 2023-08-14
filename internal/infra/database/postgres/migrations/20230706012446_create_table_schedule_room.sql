@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE room_schedule (
-    id BIGINT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     room_id UUID NOT NULL,
     schedule_id UUID NOT NULL,
     school_year_id UUID NOT NULL

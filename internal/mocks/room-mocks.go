@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/stretchr/testify/mock"
@@ -25,9 +26,9 @@ func (r *RoomActionsMock) Update(id string, dto dto.RoomRequestDto) error {
 	return args.Error(0)
 }
 
-func (r *RoomActionsMock) FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.Room, error) {
+func (r *RoomActionsMock) FindAll(dtoRequest dto.PaginatorRequest) (*common.RoomPaginationResult, error) {
 	args := r.Called(dtoRequest)
-	return args.Get(0).(*[]entities.Room), args.Error(1)
+	return args.Get(0).(*common.RoomPaginationResult), args.Error(1)
 }
 
 func (r *RoomActionsMock) FindById(id string) (*entities.Room, error) {

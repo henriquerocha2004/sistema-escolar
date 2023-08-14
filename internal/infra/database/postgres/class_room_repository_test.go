@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"github.com/google/uuid"
 	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
@@ -51,115 +53,72 @@ func (s *TestClassRoomSuit) AfterTest(suiteName, testName string) {
 	s.testTools.RefreshDatabase()
 }
 
-func (s *TestClassRoomSuit) TearDownSuite() {
-	_ = s.connection.Close()
-}
-
 func TestManagerClassRoom(t *testing.T) {
 	connection := Connect()
 	suite.Run(t, newTestClassRoomSuit(connection, testtools.NewTestDatabaseOperations(connection)))
 }
 
 func (s *TestClassRoomSuit) TestShouldCreateClassRoom() {
-
-	schoolYear := s.getSchoolYear()
-	room := s.getRoom()
-	schedule := s.getSchedule(schoolYear.Id)
-
-	classRoom := entities.ClassRoom{
-		Id:              uuid.New(),
-		VacancyQuantity: 20,
-		Shift:           "Matutino",
-		OpenDate:        &currentTime,
-		OccupiedVacancy: 0,
-		Status:          "OPEN",
-		Level:           "1 ANO",
-		Identification:  "1AS",
-		SchoolYearId:    schoolYear.Id,
-		RoomId: uuid.NullUUID{
-			UUID:  room.Id,
-			Valid: false,
-		},
-		ScheduleId:   schedule.Id,
-		Localization: "any location",
-		Type:         "Presencial",
-	}
-
+	classRoom := s.createRoom()
 	err := s.repository.Create(classRoom)
+	classRoomDb, err := s.repository.FindById(classRoom.Id.String())
+	s.Assert().NotNil(classRoomDb)
 	s.Assert().NoError(err)
+	s.Assert().Equal(classRoom.Localization, classRoomDb.Localization)
+	s.Assert().Equal(classRoom.VacancyQuantity, classRoomDb.VacancyQuantity)
 }
 
 func (s *TestClassRoomSuit) TestShouldUpdateClassRoom() {
-	schoolYear := s.getSchoolYear()
-	room := s.getRoom()
-	schedule := s.getSchedule(schoolYear.Id)
-
-	classRoom := entities.ClassRoom{
-		Id:              uuid.New(),
-		VacancyQuantity: 20,
-		Shift:           "Matutino",
-		OpenDate:        &currentTime,
-		OccupiedVacancy: 0,
-		Status:          "OPEN",
-		Level:           "1 ANO",
-		Identification:  "1AS",
-		SchoolYearId:    schoolYear.Id,
-		RoomId: uuid.NullUUID{
-			UUID:  room.Id,
-			Valid: false,
-		},
-		ScheduleId:   schedule.Id,
-		Localization: "any location",
-	}
-
+	classRoom := s.createRoom()
 	err := s.repository.Create(classRoom)
 	s.Assert().NoError(err)
-
 	classRoom.Shift = "Vespertino"
 	classRoom.Localization = "Outher Localization"
-
 	err = s.repository.Update(classRoom)
 	s.Assert().NoError(err)
-
 	classRoomDb, err := s.repository.FindById(classRoom.Id.String())
 	s.Assert().NoError(err)
 	s.Assert().Equal(classRoom.Shift, classRoomDb.Shift)
 	s.Assert().Equal(classRoom.Localization, classRoomDb.Localization)
-
 }
 
 func (s *TestClassRoomSuit) TestShouldDeleteClassRoom() {
-	schoolYear := s.getSchoolYear()
-	room := s.getRoom()
-	schedule := s.getSchedule(schoolYear.Id)
-
-	classRoom := entities.ClassRoom{
-		Id:              uuid.New(),
-		VacancyQuantity: 20,
-		Shift:           "Matutino",
-		OpenDate:        &currentTime,
-		OccupiedVacancy: 0,
-		Status:          "OPEN",
-		Level:           "1 ANO",
-		Identification:  "1AS",
-		SchoolYearId:    schoolYear.Id,
-		RoomId: uuid.NullUUID{
-			UUID:  room.Id,
-			Valid: false,
-		},
-		ScheduleId:   schedule.Id,
-		Localization: "any location",
-	}
-
+	classRoom := s.createRoom()
 	err := s.repository.Create(classRoom)
 	s.Assert().NoError(err)
-
 	err = s.repository.Delete(classRoom.Id.String())
 	s.Assert().NoError(err)
-
 	classRoomDb, err := s.repository.FindById(classRoom.Id.String())
 	s.Assert().Nil(classRoomDb)
 	s.Assert().Error(err)
+}
+
+func (s *TestClassRoomSuit) TestShouldFindClassRoomById() {
+	classRoom := s.createRoom()
+	err := s.repository.Create(classRoom)
+	s.Assert().NoError(err)
+	classRoomDb, err := s.repository.FindById(classRoom.Id.String())
+	s.Assert().NotNil(classRoomDb)
+	s.Assert().NoError(err)
+}
+
+func (s *TestClassRoomSuit) TestShouldFindByShift() {
+	classRoom := s.createRoom()
+	err := s.repository.Create(classRoom)
+	s.Assert().NoError(err)
+
+	pagination := common.Pagination{}
+	pagination.ColumnSearch = append(pagination.ColumnSearch, dto.ColumnSearch{
+		Column: "shift",
+		Value:  "Matutino",
+	})
+	pagination.Limit = 1
+	pagination.SetPage(1)
+
+	classRoomPaginationResult, err := s.repository.FindAll(pagination)
+
+	s.Assert().NoError(err)
+	s.Assert().Equal(classRoom.Shift, classRoomPaginationResult.ClassRooms[0].Shift)
 }
 
 func (s *TestClassRoomSuit) getSchoolYear() entities.SchoolYear {
@@ -204,4 +163,29 @@ func (s *TestClassRoomSuit) getSchedule(schoolYearId uuid.UUID) entities.Schedul
 	_ = s.scheduleRepository.Create(schedule)
 
 	return schedule
+}
+
+func (s *TestClassRoomSuit) createRoom() entities.ClassRoom {
+
+	schoolYear := s.getSchoolYear()
+	room := s.getRoom()
+	schedule := s.getSchedule(schoolYear.Id)
+
+	return entities.ClassRoom{
+		Id:              uuid.New(),
+		VacancyQuantity: 20,
+		Shift:           "Matutino",
+		OpenDate:        &currentTime,
+		OccupiedVacancy: 0,
+		Status:          "OPEN",
+		Level:           "1 ANO",
+		Identification:  "1AS",
+		SchoolYearId:    schoolYear.Id,
+		RoomId: uuid.NullUUID{
+			UUID:  room.Id,
+			Valid: false,
+		},
+		ScheduleId:   schedule.Id,
+		Localization: "any location",
+	}
 }

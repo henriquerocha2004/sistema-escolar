@@ -37,6 +37,8 @@ func (t *DatabaseOperations) getTables() []SchemaInformation {
 		schemaInformation = append(schemaInformation, schema)
 	}
 
+	_ = rows.Close()
+
 	return schemaInformation
 }
 
@@ -45,7 +47,7 @@ func (t *DatabaseOperations) truncateTables(SchemaInformation []SchemaInformatio
 	t.disableFk()
 
 	for _, schema := range SchemaInformation {
-		_, err := t.connection.Query(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", schema.TableName))
+		_, err := t.connection.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", schema.TableName))
 		if err != nil {
 			panic(err)
 		}
@@ -62,7 +64,7 @@ func (t *DatabaseOperations) disableFk() {
 }
 
 func (t *DatabaseOperations) enableFk() {
-	_, err := t.connection.Query("SET session_replication_role = 'origin'")
+	_, err := t.connection.Exec("SET session_replication_role = 'origin'")
 	if err != nil {
 		panic(err)
 	}

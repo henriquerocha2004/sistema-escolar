@@ -130,16 +130,16 @@ func (c *ClassRoomRepository) FindById(id string) (*entities.ClassRoom, error) {
 	return &classRoom, nil
 }
 
-func (c *ClassRoomRepository) FindAll(pagination common.Pagination) (*[]entities.ClassRoom, error) {
+func (c *ClassRoomRepository) FindAll(pagination common.Pagination) (*common.ClassRoomPaginationResult, error) {
 	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelQuery()
 
-	query := `
+	query := `		
 		SELECT 	id,status,identification,vacancies,
        			vacancies_occupied,shift,level,localization,
        			open_date,school_year_id,room_id,schedule_id,type
 			FROM class_room
-    	WHERE localization like $1
+    	WHERE localization like $1 AND deleted_at IS NULL 
 	`
 	filters := pagination.FiltersInSql()
 
@@ -186,5 +186,39 @@ func (c *ClassRoomRepository) FindAll(pagination common.Pagination) (*[]entities
 		classRooms = append(classRooms, classRoom)
 	}
 
-	return &classRooms, nil
+	var total int
+	queryCount := "SELECT COUNT(*) as total FROM class_room WHERE localization like $1"
+	columnFilter := pagination.GetColumnFilter()
+	if columnFilter != "" {
+		queryCount += columnFilter
+	}
+
+	stmtCount, err := c.db.PrepareContext(ctx, queryCount)
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmtCount.Close()
+
+	rows, err = stmtCount.QueryContext(ctx,
+		"%"+pagination.Search+"%",
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&total)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	classRoomPaginationResult := common.ClassRoomPaginationResult{
+		Total:      total,
+		ClassRooms: classRooms,
+	}
+
+	return &classRoomPaginationResult, nil
 }

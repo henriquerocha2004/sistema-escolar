@@ -138,7 +138,7 @@ func (s *ServiceController) FindById(ctx *fiber.Ctx) error {
 		))
 	}
 
-	service, err := s.serviceActions.Find(id)
+	service, err := s.serviceActions.FindById(id)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(NewResponseDto(
 			"error",

@@ -3,8 +3,9 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
@@ -96,24 +97,24 @@ func (s *ScheduleRoomRepository) FindById(id string) (*entities.ScheduleClass, e
 	return &schedule, nil
 }
 
-func (s *ScheduleRoomRepository) FindAll(paginator common.Pagination) (*[]entities.ScheduleClass, error) {
+func (s *ScheduleRoomRepository) FindAll(paginator common.Pagination) (*common.SchedulePaginationResult, error) {
 	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelQuery()
 
-	query := "SELECT class_schedule.id, description, schedule, school_year.year FROM class_schedule JOIN school_year ON school_year.id = class_schedule.school_year_id WHERE (class_schedule.description like $1 OR class_schedule.schedule = $2) AND class_schedule.deleted_at IS NULL"
+	query := "SELECT class_schedule.id, description, schedule, school_year.id FROM class_schedule JOIN school_year ON school_year.id = class_schedule.school_year_id WHERE (class_schedule.description like $1 OR class_schedule.schedule = $2) AND class_schedule.deleted_at IS NULL"
 	filters := paginator.FiltersInSql()
 
 	if filters != "" {
 		query += filters
 	}
 
-	stmt, err := s.db.PrepareContext(ctx, query)
+	stmt, err := s.db.PrepareContext(context.Background(), query)
 	if err != nil {
 		return nil, err
 	}
 
 	defer stmt.Close()
-	rows, err := stmt.QueryContext(ctx,
+	rows, err := stmt.QueryContext(context.Background(),
 		"%"+paginator.Search+"%",
 		"%"+paginator.Search+"%",
 	)
@@ -134,5 +135,40 @@ func (s *ScheduleRoomRepository) FindAll(paginator common.Pagination) (*[]entiti
 		schedules = append(schedules, schedule)
 	}
 
-	return &schedules, nil
+	var total int
+	queryCount := "SELECT COUNT(*) FROM class_schedule JOIN school_year ON school_year.id = class_schedule.school_year_id WHERE (class_schedule.description like $1 OR class_schedule.schedule = $2) AND class_schedule.deleted_at IS NULL"
+	columnFilter := paginator.GetColumnFilter()
+	if columnFilter != "" {
+		queryCount += columnFilter
+	}
+
+	stmtCount, err := s.db.PrepareContext(ctx, queryCount)
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmtCount.Close()
+
+	rows, err = stmtCount.QueryContext(ctx,
+		"%"+paginator.Search+"%",
+		"%"+paginator.Search+"%",
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&total)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	schedulePaginationResult := common.SchedulePaginationResult{
+		Total:     total,
+		Schedules: schedules,
+	}
+
+	return &schedulePaginationResult, nil
 }

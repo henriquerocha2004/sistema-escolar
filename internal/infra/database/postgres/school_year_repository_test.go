@@ -30,8 +30,8 @@ type TestSchoolYearSuit struct {
 	repository *SchoolYearRepository
 }
 
-func newTestSchoolYearSuit(connection *sql.DB, testTools *testtools.DatabaseOperations) *TestRoomSuit {
-	return &TestRoomSuit{
+func newTestSchoolYearSuit(connection *sql.DB, testTools *testtools.DatabaseOperations) *TestSchoolYearSuit {
+	return &TestSchoolYearSuit{
 		testTools:  testTools,
 		connection: connection,
 	}
@@ -43,10 +43,6 @@ func (s *TestSchoolYearSuit) SetupSuite() {
 
 func (s *TestSchoolYearSuit) AfterTest(suiteName, testName string) {
 	s.testTools.RefreshDatabase()
-}
-
-func (s *TestSchoolYearSuit) TearDownSuite() {
-	_ = s.connection.Close()
 }
 
 func TestManagerSchoolYear(t *testing.T) {
@@ -143,4 +139,23 @@ func (s *TestSchoolYearSuit) TestShouldFindSchoolYearById() {
 	paginationResult, err := s.repository.FindAll(paginator)
 	s.Assert().NoError(err)
 	s.Assert().Equal(1, len(paginationResult.SchoolYears))
+}
+
+func (s *TestSchoolYearSuit) TestShouldFindSchoolYearByYear() {
+	startAt, _ := time.Parse("2006-02-02", "2001-01-01")
+	endAt, _ := time.Parse("2006-02-02", "2001-12-30")
+
+	schoolYear := entities.SchoolYear{
+		Id:        uuid.New(),
+		Year:      "2001",
+		StartedAt: &startAt,
+		EndAt:     &endAt,
+	}
+
+	err := s.repository.Create(schoolYear)
+	s.Assert().NoError(err)
+
+	schoolYearDb, err := s.repository.FindByYear(schoolYear.Year)
+	s.Assert().NoError(err)
+	s.Assert().Equal(schoolYear.Year, schoolYearDb.Year)
 }

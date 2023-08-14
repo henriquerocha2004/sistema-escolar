@@ -15,7 +15,7 @@ type ScheduleActionsInterface interface {
 	Delete(id string) error
 	Update(id string, dto dto.ScheduleRequestDto) error
 	FindOne(id string) (*entities.ScheduleClass, error)
-	FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.ScheduleClass, error)
+	FindAll(dtoRequest dto.PaginatorRequest) (*common.SchedulePaginationResult, error)
 }
 
 type ScheduleClassActions struct {
@@ -101,7 +101,7 @@ func (s *ScheduleClassActions) FindOne(id string) (*entities.ScheduleClass, erro
 	return schedule, nil
 }
 
-func (s *ScheduleClassActions) FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.ScheduleClass, error) {
+func (s *ScheduleClassActions) FindAll(dtoRequest dto.PaginatorRequest) (*common.SchedulePaginationResult, error) {
 	paginator := common.Pagination{}
 	paginator.FillFromDto(dtoRequest)
 	schedules, err := s.repository.FindAll(paginator)

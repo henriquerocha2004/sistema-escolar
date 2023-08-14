@@ -77,11 +77,26 @@ func (p *Pagination) GetColumnFilter() string {
 }
 
 type SchoolYearPaginationResult struct {
-	Total       int `json:"total"`
-	SchoolYears []entities.SchoolYear
+	Total       int                   `json:"total"`
+	SchoolYears []entities.SchoolYear `json:"school_years"`
 }
 
 type ServicePaginationResult struct {
-	Total    int `json:"total"`
-	Services []entities.Service
+	Total    int                `json:"total"`
+	Services []entities.Service `json:"services"`
+}
+
+type ClassRoomPaginationResult struct {
+	Total      int                  `json:"total"`
+	ClassRooms []entities.ClassRoom `json:"class_rooms"`
+}
+
+type RoomPaginationResult struct {
+	Total int             `json:"total"`
+	Rooms []entities.Room `json:"rooms"`
+}
+
+type SchedulePaginationResult struct {
+	Total     int `json:"total"`
+	Schedules []entities.ScheduleClass
 }

@@ -121,7 +121,7 @@ func (r *RoomRepository) FindByCode(code string) (*entities.Room, error) {
 	return &room, nil
 }
 
-func (r *RoomRepository) FindAll(paginator common.Pagination) (*[]entities.Room, error) {
+func (r *RoomRepository) FindAll(paginator common.Pagination) (*common.RoomPaginationResult, error) {
 
 	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelQuery()
@@ -160,7 +160,42 @@ func (r *RoomRepository) FindAll(paginator common.Pagination) (*[]entities.Room,
 		rooms = append(rooms, room)
 	}
 
-	return &rooms, nil
+	var total int
+	queryCount := "SELECT COUNT(*) as total FROM rooms WHERE (code like $1 OR description like $2) AND deleted_at IS NULL"
+	columnFilter := paginator.GetColumnFilter()
+	if columnFilter != "" {
+		queryCount += columnFilter
+	}
+
+	stmtCount, err := r.db.PrepareContext(ctx, queryCount)
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmtCount.Close()
+
+	rows, err = stmtCount.QueryContext(ctx,
+		"%"+paginator.Search+"%",
+		"%"+paginator.Search+"%",
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&total)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	roomPaginationResult := common.RoomPaginationResult{
+		Total: total,
+		Rooms: rooms,
+	}
+
+	return &roomPaginationResult, nil
 }
 
 func (r *RoomRepository) SyncSchedule(scheduleDto dto.RoomScheduleDto) error {

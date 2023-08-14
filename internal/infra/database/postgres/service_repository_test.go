@@ -2,14 +2,17 @@ package postgres
 
 import (
 	"database/sql"
-	"github.com/google/uuid"
-	testTools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
-	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/suite"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/google/uuid"
+	testTools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/suite"
 )
 
 func init() {
@@ -40,10 +43,6 @@ func (s *TestServiceSuit) SetupSuite() {
 
 func (s *TestServiceSuit) AfterTest(suiteName, testName string) {
 	s.testTools.RefreshDatabase()
-}
-
-func (s *TestServiceSuit) TearDownSuite() {
-	_ = s.connection.Close()
 }
 
 func TestManagerService(t *testing.T) {
@@ -96,4 +95,25 @@ func (s *TestServiceSuit) TestShouldDeleteSchoolYear() {
 	serviceDb, err := s.repository.FindById(service.Id.String())
 	s.Assert().Error(err)
 	s.Assert().Nil(serviceDb)
+}
+
+func (s *TestServiceSuit) TestShouldFindByServiceDescription() {
+	service := entities.Service{
+		Id:          uuid.New(),
+		Description: "Ensino Fundamental",
+	}
+
+	err := s.repository.Create(service)
+	s.Assert().NoError(err)
+
+	pagination := common.Pagination{}
+	pagination.ColumnSearch = append(pagination.ColumnSearch, dto.ColumnSearch{
+		Column: "description",
+		Value:  "Ensino Fundamental",
+	})
+	pagination.SetPage(1)
+
+	paginationResult, err := s.repository.FindAll(pagination)
+	s.Assert().NoError(err)
+	s.Assert().Equal(1, len(paginationResult.Services))
 }

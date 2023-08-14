@@ -2,16 +2,18 @@ package postgres
 
 import (
 	"database/sql"
-	"log"
-	"os"
-	"testing"
-
+	"fmt"
 	"github.com/google/uuid"
 	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
+	"log"
+	"os"
+	"testing"
+	"time"
 )
 
 func init() {
@@ -24,9 +26,11 @@ func init() {
 
 type TestRoomSuit struct {
 	suite.Suite
-	connection *sql.DB
-	testTools  *testtools.DatabaseOperations
-	repository *RoomRepository
+	connection           *sql.DB
+	testTools            *testtools.DatabaseOperations
+	repository           *RoomRepository
+	schoolYearRepository *SchoolYearRepository
+	scheduleRepository   *ScheduleRoomRepository
 }
 
 func newTestRoomSuit(connection *sql.DB, testTools *testtools.DatabaseOperations) *TestRoomSuit {
@@ -38,6 +42,8 @@ func newTestRoomSuit(connection *sql.DB, testTools *testtools.DatabaseOperations
 
 func (s *TestRoomSuit) SetupSuite() {
 	s.repository = NewRoomRepository(s.connection)
+	s.schoolYearRepository = NewSchoolYearRepository(s.connection)
+	s.scheduleRepository = NewScheduleRoomRepository(s.connection)
 }
 
 func (s *TestRoomSuit) AfterTest(suiteName, testName string) {
@@ -45,7 +51,9 @@ func (s *TestRoomSuit) AfterTest(suiteName, testName string) {
 }
 
 func (s *TestRoomSuit) TearDownSuite() {
-	_ = s.connection.Close()
+	fmt.Println("tear down")
+	err := s.connection.Close()
+	fmt.Println(err)
 }
 
 func TestManagerRoom(t *testing.T) {
@@ -125,5 +133,62 @@ func (s *TestRoomSuit) TestShouldFindRoomById() {
 
 	rooms, err := s.repository.FindAll(paginator)
 	s.Assert().NoError(err)
-	s.Assert().Equal(1, len(*rooms))
+	s.Assert().Equal(1, len(rooms.Rooms))
+}
+
+func (s *TestRoomSuit) TestShouldFindByCode() {
+	room := entities.Room{
+		Id:          uuid.New(),
+		Code:        "SL-07",
+		Description: "Sala 7",
+		Capacity:    25,
+	}
+
+	err := s.repository.Create(room)
+	s.Assert().NoError(err)
+
+	roomDB, err := s.repository.FindByCode(room.Code)
+	s.Assert().NoError(err)
+	s.Assert().Equal(room.Code, roomDB.Code)
+}
+
+func (s *TestRoomSuit) TestShouldSyncSchedule() {
+	room := entities.Room{
+		Id:          uuid.New(),
+		Code:        "SL-07",
+		Description: "Sala 7",
+		Capacity:    25,
+	}
+
+	err := s.repository.Create(room)
+	s.Assert().NoError(err)
+
+	now := time.Now()
+
+	schoolYear := entities.SchoolYear{
+		Id:        uuid.New(),
+		Year:      "2021",
+		StartedAt: &now,
+		EndAt:     &now,
+	}
+
+	_ = s.schoolYearRepository.Create(schoolYear)
+
+	schedule := entities.ScheduleClass{
+		Id:          uuid.New(),
+		Schedule:    "09:00-10:00",
+		Description: "Any Description",
+		SchoolYear:  schoolYear.Id,
+	}
+
+	_ = s.scheduleRepository.Create(schedule)
+
+	roomScheduleDto := dto.RoomScheduleDto{
+		SchoolYear:  schoolYear.Id.String(),
+		RoomId:      room.Id.String(),
+		ScheduleIds: []string{schedule.Id.String()},
+	}
+
+	err = s.repository.SyncSchedule(roomScheduleDto)
+	s.Assert().NoError(err)
 }

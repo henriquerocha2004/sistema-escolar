@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/stretchr/testify/mock"
@@ -30,7 +31,7 @@ func (s *ScheduleActionsMock) FindOne(id string) (*entities.ScheduleClass, error
 	return args.Get(0).(*entities.ScheduleClass), args.Error(1)
 }
 
-func (s *ScheduleActionsMock) FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.ScheduleClass, error) {
+func (s *ScheduleActionsMock) FindAll(dtoRequest dto.PaginatorRequest) (*common.SchedulePaginationResult, error) {
 	args := s.Called(dtoRequest)
-	return args.Get(0).(*[]entities.ScheduleClass), args.Error(1)
+	return args.Get(0).(*common.SchedulePaginationResult), args.Error(1)
 }

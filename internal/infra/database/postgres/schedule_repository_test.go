@@ -9,6 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
@@ -44,10 +46,6 @@ func (s *TestScheduleRoomSuit) SetupSuite() {
 
 func (s *TestScheduleRoomSuit) AfterTest(suiteName, testName string) {
 	s.testTools.RefreshDatabase()
-}
-
-func (s *TestScheduleRoomSuit) TearDownSuite() {
-	_ = s.connection.Close()
 }
 
 func TestManagerScheduleRoom(t *testing.T) {
@@ -112,6 +110,51 @@ func (s *TestScheduleRoomSuit) TestShouldDeleteScheduleRoom() {
 	s.Assert().Error(err)
 	s.Assert().Equal("sql: no rows in result set", err.Error())
 	s.Assert().Nil(scheduleDb)
+}
+
+func (s *TestScheduleRoomSuit) TestShouldFindByDescription() {
+
+	schoolYear := s.getSchoolYear()
+
+	schedule := entities.ScheduleClass{
+		Id:          uuid.New(),
+		Description: "Any Description",
+		Schedule:    "8:00-9:00",
+		SchoolYear:  schoolYear.Id,
+	}
+
+	err := s.repository.Create(schedule)
+	s.Assert().NoError(err)
+
+	pagination := common.Pagination{}
+	pagination.ColumnSearch = append(pagination.ColumnSearch, dto.ColumnSearch{
+		Column: "description",
+		Value:  "Any Description",
+	})
+	pagination.Limit = 1
+	pagination.SetPage(1)
+
+	schedulePaginationResult, err := s.repository.FindAll(pagination)
+	s.Assert().NoError(err)
+	s.Assert().Equal(schedule.Description, schedulePaginationResult.Schedules[0].Description)
+}
+
+func (s *TestScheduleRoomSuit) TestShouldFindScheduleById() {
+	schoolYear := s.getSchoolYear()
+
+	schedule := entities.ScheduleClass{
+		Id:          uuid.New(),
+		Description: "Any Description",
+		Schedule:    "8:00-9:00",
+		SchoolYear:  schoolYear.Id,
+	}
+
+	err := s.repository.Create(schedule)
+	s.Assert().NoError(err)
+
+	scheduleDb, err := s.repository.FindById(schedule.Id.String())
+	s.Assert().NoError(err)
+	s.Assert().Equal(schedule.Description, scheduleDb.Description)
 }
 
 func (s *TestScheduleRoomSuit) getSchoolYear() entities.SchoolYear {

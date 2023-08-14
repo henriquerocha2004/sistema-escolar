@@ -14,7 +14,7 @@ type RoomActionsInterface interface {
 	Create(dto dto.RoomRequestDto) error
 	Delete(id string) error
 	Update(id string, dto dto.RoomRequestDto) error
-	FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.Room, error)
+	FindAll(dtoRequest dto.PaginatorRequest) (*common.RoomPaginationResult, error)
 	FindById(id string) (*entities.Room, error)
 	SyncSchedule(scheduleRoomDto dto.RoomScheduleDto) error
 }
@@ -82,7 +82,7 @@ func (ra *RoomActions) Update(id string, dto dto.RoomRequestDto) error {
 	return err
 }
 
-func (ra *RoomActions) FindAll(dtoRequest dto.PaginatorRequest) (*[]entities.Room, error) {
+func (ra *RoomActions) FindAll(dtoRequest dto.PaginatorRequest) (*common.RoomPaginationResult, error) {
 
 	paginator := common.Pagination{}
 	paginator.FillFromDto(dtoRequest)
