@@ -9,4 +9,5 @@ type Address struct {
 	District string    `json:"district"`
 	State    string    `json:"state"`
 	ZipCode  string    `json:"zip_code"`
+	OwnerId  uuid.UUID `json:"owner_id"`
 }

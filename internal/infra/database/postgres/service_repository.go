@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,9 +25,11 @@ func NewServiceRepository(db *sql.DB) *ServiceRepository {
 }
 
 func (s *ServiceRepository) Create(service entities.Service) error {
+
 	serviceModel := CreateServiceParams{
 		ID:          service.Id,
 		Description: service.Description,
+		Price:       fmt.Sprintf("%f", service.Price),
 		CreatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
@@ -59,6 +63,7 @@ func (s *ServiceRepository) Update(service entities.Service) error {
 	serviceModel := UpdateServiceParams{
 		ID:          service.Id,
 		Description: service.Description,
+		Price:       fmt.Sprintf("%f", service.Price),
 		UpdatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
@@ -77,9 +82,12 @@ func (s *ServiceRepository) FindById(id string) (*entities.Service, error) {
 		return nil, err
 	}
 
+	price, _ := strconv.ParseFloat(serviceModel.Price, 64)
+
 	service := entities.Service{
 		Id:          serviceModel.ID,
 		Description: serviceModel.Description,
+		Price:       price,
 	}
 
 	return &service, nil
@@ -89,7 +97,7 @@ func (s *ServiceRepository) FindAll(paginator common.Pagination) (*common.Servic
 	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelQuery()
 
-	query := "SELECT id, description FROM services WHERE description like $1 AND deleted_at IS NULL"
+	query := "SELECT id, description, price FROM services WHERE description like $1 AND deleted_at IS NULL"
 	filters := paginator.FiltersInSql()
 
 	if filters != "" {
@@ -114,7 +122,7 @@ func (s *ServiceRepository) FindAll(paginator common.Pagination) (*common.Servic
 
 	for rows.Next() {
 		var service entities.Service
-		err = rows.Scan(&service.Id, &service.Description)
+		err = rows.Scan(&service.Id, &service.Description, &service.Price)
 		if err != nil {
 			return nil, err
 		}

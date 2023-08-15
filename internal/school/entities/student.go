@@ -13,7 +13,6 @@ type Student struct {
 	BirthDay           *time.Time              `json:"birth_day"`
 	RgDocument         string                  `json:"rg_document"`
 	CPFDocument        string                  `json:"cpf_document"`
-	Level              string                  `json:"level"`
 	Email              string                  `json:"email"`
 	HimSelfResponsible bool                    `json:"him_self_responsible"`
 	Addresses          []value_objects.Address `json:"addresses"`

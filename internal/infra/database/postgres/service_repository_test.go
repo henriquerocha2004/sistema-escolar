@@ -55,6 +55,7 @@ func (s *TestServiceSuit) TestShouldCreateService() {
 	service := entities.Service{
 		Id:          uuid.New(),
 		Description: "Ensino Fundamental",
+		Price:       440.00,
 	}
 
 	err := s.repository.Create(service)
@@ -65,6 +66,7 @@ func (s *TestServiceSuit) TestShouldUpdateSchoolYear() {
 	service := entities.Service{
 		Id:          uuid.New(),
 		Description: "Ensino Fundamental",
+		Price:       440.00,
 	}
 
 	err := s.repository.Create(service)
@@ -84,6 +86,7 @@ func (s *TestServiceSuit) TestShouldDeleteSchoolYear() {
 	service := entities.Service{
 		Id:          uuid.New(),
 		Description: "Ensino Fundamental",
+		Price:       440.00,
 	}
 
 	err := s.repository.Create(service)
@@ -101,6 +104,7 @@ func (s *TestServiceSuit) TestShouldFindByServiceDescription() {
 	service := entities.Service{
 		Id:          uuid.New(),
 		Description: "Ensino Fundamental",
+		Price:       440.00,
 	}
 
 	err := s.repository.Create(service)

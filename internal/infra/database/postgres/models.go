@@ -52,7 +52,7 @@ type Room struct {
 }
 
 type RoomSchedule struct {
-	ID           int64     `json:"id"`
+	ID           int32     `json:"id"`
 	RoomID       uuid.UUID `json:"room_id"`
 	ScheduleID   uuid.UUID `json:"schedule_id"`
 	SchoolYearID uuid.UUID `json:"school_year_id"`
@@ -71,6 +71,7 @@ type SchoolYear struct {
 type Service struct {
 	ID          uuid.UUID    `json:"id"`
 	Description string       `json:"description"`
+	Price       string       `json:"price"`
 	CreatedAt   sql.NullTime `json:"created_at"`
 	UpdatedAt   sql.NullTime `json:"updated_at"`
 	DeletedAt   sql.NullTime `json:"deleted_at"`

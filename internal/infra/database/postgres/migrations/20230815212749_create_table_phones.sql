@@ -1,9 +1,11 @@
+-- Active: 1691937846246@@127.0.0.1@9500@sistema-escolar
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE services (
+CREATE TABLE phones (
     id UUID PRIMARY KEY,
     description VARCHAR(255) NOT NULL,
-    price NUMERIC(10,2) NOT NULL,
+    phone VARCHAR(255) NOT NULL,
+    owner_id UUID NOT NULL,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP
@@ -12,5 +14,5 @@ CREATE TABLE services (
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE services;
+DROP TABLE phones;
 -- +goose StatementEnd

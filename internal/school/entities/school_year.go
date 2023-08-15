@@ -2,9 +2,9 @@ package entities
 
 import (
 	"errors"
-	"fmt"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 )
@@ -17,7 +17,6 @@ type SchoolYear struct {
 }
 
 func (s *SchoolYear) CheckPeriod() error {
-	fmt.Println(s)
 	if s.EndAt.Before(*s.StartedAt) {
 		return errors.New("invalid period provided. EndAt cannot be before that StartedAt")
 	}

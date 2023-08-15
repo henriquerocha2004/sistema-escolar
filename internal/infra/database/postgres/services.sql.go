@@ -13,12 +13,13 @@ import (
 )
 
 const createService = `-- name: CreateService :exec
-INSERT into services (id, description, created_at, updated_at) VALUES ($1,$2,$3,$4)
+INSERT into services (id, description, price, created_at, updated_at) VALUES ($1,$2,$3,$4,$5)
 `
 
 type CreateServiceParams struct {
 	ID          uuid.UUID    `json:"id"`
 	Description string       `json:"description"`
+	Price       string       `json:"price"`
 	CreatedAt   sql.NullTime `json:"created_at"`
 	UpdatedAt   sql.NullTime `json:"updated_at"`
 }
@@ -27,6 +28,7 @@ func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) er
 	_, err := q.db.ExecContext(ctx, createService,
 		arg.ID,
 		arg.Description,
+		arg.Price,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -48,32 +50,39 @@ func (q *Queries) DeleteService(ctx context.Context, arg DeleteServiceParams) er
 }
 
 const findServiceById = `-- name: FindServiceById :one
-SELECT id, description FROM services WHERE id = $1 AND deleted_at IS NULL
+SELECT id, description, price FROM services WHERE id = $1 AND deleted_at IS NULL
 `
 
 type FindServiceByIdRow struct {
 	ID          uuid.UUID `json:"id"`
 	Description string    `json:"description"`
+	Price       string    `json:"price"`
 }
 
 func (q *Queries) FindServiceById(ctx context.Context, id uuid.UUID) (FindServiceByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, findServiceById, id)
 	var i FindServiceByIdRow
-	err := row.Scan(&i.ID, &i.Description)
+	err := row.Scan(&i.ID, &i.Description, &i.Price)
 	return i, err
 }
 
 const updateService = `-- name: UpdateService :exec
-UPDATE services SET description = $1, updated_at = $2 WHERE id = $3
+UPDATE services SET description = $1, price = $2, updated_at = $3 WHERE id = $4
 `
 
 type UpdateServiceParams struct {
 	Description string       `json:"description"`
+	Price       string       `json:"price"`
 	UpdatedAt   sql.NullTime `json:"updated_at"`
 	ID          uuid.UUID    `json:"id"`
 }
 
 func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) error {
-	_, err := q.db.ExecContext(ctx, updateService, arg.Description, arg.UpdatedAt, arg.ID)
+	_, err := q.db.ExecContext(ctx, updateService,
+		arg.Description,
+		arg.Price,
+		arg.UpdatedAt,
+		arg.ID,
+	)
 	return err
 }
