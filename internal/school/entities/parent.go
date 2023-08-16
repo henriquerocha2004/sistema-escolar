@@ -15,6 +15,6 @@ type Parent struct {
 	Addresses   []value_objects.Address `json:"addresses"`
 	Phones      []value_objects.Phone   `json:"phones"`
 	RgDocument  string                  `json:"rg_document"`
-	CpfDocument string                  `json:"cpf_document"`
+	CpfDocument value_objects.CPF       `json:"cpf_document"`
 	StudentId   uuid.UUID               `json:"student_id"`
 }
