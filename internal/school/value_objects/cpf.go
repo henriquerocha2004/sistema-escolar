@@ -3,6 +3,7 @@ package value_objects
 import (
 	"errors"
 	"regexp"
+	"strconv"
 )
 
 type CPF string
@@ -25,9 +26,14 @@ func (c *CPF) Validate() error {
 		return errors.New("all digits from cpf are equals")
 	}
 
-	digit1 := c.calculateCheckDigit(factorDigit1)
-	digit2 := c.calculateCheckDigit(factorDigit2)
+	digit1 := strconv.Itoa(c.calculateCheckDigit(factorDigit1))
+	digit2 := strconv.Itoa(c.calculateCheckDigit(factorDigit2))
 	cpfDigit := c.extractDigit()
+	calculatedDigit := digit1 + digit2
+
+	if cpfDigit != calculatedDigit {
+		return errors.New("invalid cpf")
+	}
 
 	return nil
 }
@@ -61,8 +67,10 @@ func (c *CPF) calculateCheckDigit(factor int) int {
 
 	for _, digit := range digits {
 		if factor > 1 {
-			digitInt := int(digit)
+			digit := string(digit)
+			digitInt, _ := strconv.Atoi(digit)
 			total += digitInt * factor
+			factor--
 		}
 	}
 

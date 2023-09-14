@@ -12,7 +12,7 @@ CREATE TABLE registrations (
     enrollment_fee NUMERIC(10,2),
     due_date TIMESTAMP,
     month_duration INTEGER,
-    status VARCHAR(255),
+    status VARCHAR(255) NOT NULL,
     enrollment_date TIMESTAMP,
     school_year_id UUID,
     created_at TIMESTAMP,

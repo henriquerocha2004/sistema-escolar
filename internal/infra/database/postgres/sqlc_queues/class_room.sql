@@ -39,3 +39,33 @@ FROM class_room
     WHERE id = $1
         AND deleted_at IS NULL;
 
+-- name: FindClassByIdLock :one
+
+SELECT id,
+       status,
+       identification,
+       vacancies,
+       vacancies_occupied,
+       shift,
+       level,
+       localization,
+       open_date,
+       school_year_id,
+       room_id,
+      schedule_id,
+      type
+FROM class_room
+    WHERE id = $1
+        AND deleted_at IS NULL
+        FOR UPDATE;
+
+
+-- name: UpdateVacancyOccupied :exec
+UPDATE class_room 
+    SET vacancies_occupied = $1, 
+        updated_at = $2 
+WHERE 
+    id = $3 
+    AND vacancies_occupied < vacancies 
+    AND deleted_at IS NULL 
+    RETURNING vacancies_occupied;

@@ -42,3 +42,31 @@ func TestShouldReturnErrorIfAllCharactersIsEquals(t *testing.T) {
 		assert.Equal(t, "all digits from cpf are equals", err.Error())
 	}
 }
+
+func TestShouldValidateWithSuccessCpf(t *testing.T) {
+
+	cpfs := []string{
+		"823.781.140-28",
+		"82378114028",
+	}
+
+	for _, cpfTest := range cpfs {
+		var cpf CPF = CPF(cpfTest)
+		err := cpf.Validate()
+		assert.NoError(t, err)
+	}
+}
+
+func TestShouldReturnErrorIfCpfIsInvalid(t *testing.T) {
+	cpfs := []string{
+		"79855458855",
+		"85489665222",
+	}
+
+	for _, cpfTest := range cpfs {
+		var cpf CPF = CPF(cpfTest)
+		err := cpf.Validate()
+		assert.Error(t, err)
+		assert.Equal(t, "invalid cpf", err.Error())
+	}
+}

@@ -12,23 +12,26 @@ import (
 type ContainerDependency struct {
 	db *sql.DB
 
-	roomRepository       secretary.RoomRepository
-	schoolYearRepository secretary.SchoolYearRepository
-	scheduleRepository   secretary.ScheduleRoomRepository
-	classRoomRepository  secretary.ClassRoomRepository
-	serviceRepository    financial.ServiceRepository
+	roomRepository         secretary.RoomRepository
+	schoolYearRepository   secretary.SchoolYearRepository
+	scheduleRepository     secretary.ScheduleRoomRepository
+	classRoomRepository    secretary.ClassRoomRepository
+	serviceRepository      financial.ServiceRepository
+	registrationRepository secretary.RegistrationRepository
 
 	roomActions         secretary.RoomActionsInterface
 	schoolYearActions   secretary.SchoolYearActionsInterface
 	scheduleRoomActions secretary.ScheduleActionsInterface
 	classRoomActions    secretary.ClassRoomActionsInterface
 	serviceActions      financial.ServiceActionsInterface
+	registrationActions secretary.RegistrationActionsInterface
 
 	roomController          *controllers.RoomController
 	schoolYearController    *controllers.SchoolYearController
 	scheduleClassController *controllers.ScheduleController
 	classRoomController     *controllers.ClassRoomController
 	serviceController       *controllers.ServiceController
+	registrationController  *controllers.RegisterController
 }
 
 func (c *ContainerDependency) GetDB() *sql.DB {
@@ -91,6 +94,16 @@ func (c *ContainerDependency) GetServiceRepository() *financial.ServiceRepositor
 	return &c.serviceRepository
 }
 
+func (c *ContainerDependency) GetRegisterRepository() *secretary.RegistrationRepository {
+	if c.registrationRepository == nil {
+		c.registrationRepository = postgres.NewRegistrationRepository(
+			c.GetDB(),
+		)
+	}
+
+	return &c.registrationRepository
+}
+
 // Actions
 
 func (c *ContainerDependency) GetRoomActions() secretary.RoomActionsInterface {
@@ -144,6 +157,18 @@ func (c *ContainerDependency) GetServiceActions() financial.ServiceActionsInterf
 	return c.serviceActions
 }
 
+func (c *ContainerDependency) GetRegistrationActions() secretary.RegistrationActionsInterface {
+	if c.registrationActions == nil {
+		c.registrationActions = secretary.NewRegistrationActions(
+			*c.GetServiceRepository(),
+			*c.GetClassRoomRepository(),
+			*c.GetRegisterRepository(),
+		)
+	}
+
+	return c.registrationActions
+}
+
 // Controllers
 
 func (c *ContainerDependency) GetRoomController() *controllers.RoomController {
@@ -194,4 +219,14 @@ func (c *ContainerDependency) GetServiceController() *controllers.ServiceControl
 	}
 
 	return c.serviceController
+}
+
+func (c *ContainerDependency) GetRegisterController() *controllers.RegisterController {
+	if c.registrationController == nil {
+		c.registrationController = controllers.NewRegisterController(
+			c.GetRegistrationActions(),
+		)
+	}
+
+	return c.registrationController
 }

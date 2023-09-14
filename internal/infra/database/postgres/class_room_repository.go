@@ -3,10 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
-	"time"
 )
 
 type ClassRoomRepository struct {
@@ -108,6 +109,37 @@ func (c *ClassRoomRepository) FindById(id string) (*entities.ClassRoom, error) {
 	}
 
 	classRoomModel, err := c.queues.FindClassById(context.Background(), classId)
+	if err != nil {
+		return nil, err
+	}
+
+	classRoom := entities.ClassRoom{
+		Id:              classRoomModel.ID,
+		VacancyQuantity: int(classRoomModel.Vacancies),
+		Shift:           classRoomModel.Shift,
+		OpenDate:        &classRoomModel.OpenDate,
+		Status:          classRoomModel.Status,
+		Level:           classRoomModel.Level,
+		Identification:  classRoomModel.Identification,
+		SchoolYearId:    classRoomModel.SchoolYearID,
+		RoomId:          classRoomModel.RoomID,
+		ScheduleId:      classRoomModel.ScheduleID,
+		Localization:    classRoomModel.Localization.String,
+		Type:            classRoomModel.Type,
+	}
+
+	return &classRoom, nil
+}
+
+// FindByIdLock: Funcao que busca pelo ID da classe, porém ela faz o lock do registro no banco
+// para evitar problemas de race conditions
+func (c *ClassRoomRepository) FindByIdLock(id string) (*entities.ClassRoom, error) {
+	classId, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	classRoomModel, err := c.queues.FindClassByIdLock(context.Background(), classId)
 	if err != nil {
 		return nil, err
 	}

@@ -11,6 +11,19 @@ import (
 	"github.com/google/uuid"
 )
 
+type Address struct {
+	ID        uuid.UUID    `json:"id"`
+	Street    string       `json:"street"`
+	City      string       `json:"city"`
+	District  string       `json:"district"`
+	State     string       `json:"state"`
+	ZipCode   string       `json:"zip_code"`
+	OwnerID   uuid.UUID    `json:"owner_id"`
+	CreatedAt sql.NullTime `json:"created_at"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
+}
+
 type ClassRoom struct {
 	ID                uuid.UUID      `json:"id"`
 	Active            bool           `json:"active"`
@@ -39,6 +52,50 @@ type ClassSchedule struct {
 	CreatedAt    sql.NullTime `json:"created_at"`
 	UpdatedAt    sql.NullTime `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
+type Parent struct {
+	ID          uuid.UUID      `json:"id"`
+	FirstName   string         `json:"first_name"`
+	LastName    string         `json:"last_name"`
+	Birthday    time.Time      `json:"birthday"`
+	RgDocument  sql.NullString `json:"rg_document"`
+	CpfDocument string         `json:"cpf_document"`
+	StudentID   uuid.UUID      `json:"student_id"`
+	Email       string         `json:"email"`
+	CreatedAt   sql.NullTime   `json:"created_at"`
+	UpdatedAt   sql.NullTime   `json:"updated_at"`
+	DeletedAt   sql.NullTime   `json:"deleted_at"`
+}
+
+type Phone struct {
+	ID          uuid.UUID    `json:"id"`
+	Description string       `json:"description"`
+	Phone       string       `json:"phone"`
+	OwnerID     uuid.UUID    `json:"owner_id"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	UpdatedAt   sql.NullTime `json:"updated_at"`
+	DeletedAt   sql.NullTime `json:"deleted_at"`
+}
+
+type Registration struct {
+	ID                   uuid.UUID      `json:"id"`
+	Code                 string         `json:"code"`
+	ClassRoomID          uuid.NullUUID  `json:"class_room_id"`
+	Shift                sql.NullString `json:"shift"`
+	StudentID            uuid.UUID      `json:"student_id"`
+	ServiceID            uuid.UUID      `json:"service_id"`
+	MonthlyFee           string         `json:"monthly_fee"`
+	InstallmentsQuantity int32          `json:"installments_quantity"`
+	EnrollmentFee        sql.NullString `json:"enrollment_fee"`
+	DueDate              sql.NullTime   `json:"due_date"`
+	MonthDuration        sql.NullInt32  `json:"month_duration"`
+	Status               string         `json:"status"`
+	EnrollmentDate       sql.NullTime   `json:"enrollment_date"`
+	SchoolYearID         uuid.NullUUID  `json:"school_year_id"`
+	CreatedAt            sql.NullTime   `json:"created_at"`
+	UpdatedAt            sql.NullTime   `json:"updated_at"`
+	DeletedAt            sql.NullTime   `json:"deleted_at"`
 }
 
 type Room struct {
@@ -75,4 +132,18 @@ type Service struct {
 	CreatedAt   sql.NullTime `json:"created_at"`
 	UpdatedAt   sql.NullTime `json:"updated_at"`
 	DeletedAt   sql.NullTime `json:"deleted_at"`
+}
+
+type Student struct {
+	ID                 uuid.UUID      `json:"id"`
+	FirstName          string         `json:"first_name"`
+	LastName           string         `json:"last_name"`
+	Birthday           time.Time      `json:"birthday"`
+	RgDocument         sql.NullString `json:"rg_document"`
+	CpfDocument        string         `json:"cpf_document"`
+	Email              sql.NullString `json:"email"`
+	HimSelfResponsible bool           `json:"him_self_responsible"`
+	CreatedAt          sql.NullTime   `json:"created_at"`
+	UpdatedAt          sql.NullTime   `json:"updated_at"`
+	DeletedAt          sql.NullTime   `json:"deleted_at"`
 }

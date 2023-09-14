@@ -12,4 +12,5 @@ func GetRoutes(app *fiber.App) {
 	setSchedulesRoutes(app, di)
 	setClassRoomRoutes(app, di)
 	setServiceRoutes(app, di)
+	setRegisterRoutes(app, di)
 }

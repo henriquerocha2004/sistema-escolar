@@ -9,6 +9,7 @@ CREATE TABLE parents (
     rg_document VARCHAR(255),
     cpf_document VARCHAR(255) NOT NULL,
     student_id UUID NOT NULL,
+    email VARCHAR(255) NOT NULL,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP

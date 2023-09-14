@@ -4,6 +4,7 @@ import (
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/value_objects"
 )
 
 type ClassRoomRepository interface {
@@ -12,6 +13,7 @@ type ClassRoomRepository interface {
 	Update(classRoom entities.ClassRoom) error
 	FindAll(pagination common.Pagination) (*common.ClassRoomPaginationResult, error)
 	FindById(id string) (*entities.ClassRoom, error)
+	FindByIdLock(id string) (*entities.ClassRoom, error)
 }
 
 type RoomRepository interface {
@@ -39,4 +41,24 @@ type SchoolYearRepository interface {
 	FindById(id string) (*entities.SchoolYear, error)
 	FindByYear(year string) (*entities.SchoolYear, error)
 	FindAll(paginator common.Pagination) (*common.SchoolYearPaginationResult, error)
+}
+
+type RegistrationRepository interface {
+	Create(registration entities.Registration) error
+}
+
+type StudentRepository interface {
+	Create(student entities.Student) error
+}
+
+type ParentRepository interface {
+	Create(parent entities.Parent) error
+}
+
+type AddressRepository interface {
+	Create(address value_objects.Address) error
+}
+
+type PhoneRepository interface {
+	Create(phone value_objects.Phone) error
 }
