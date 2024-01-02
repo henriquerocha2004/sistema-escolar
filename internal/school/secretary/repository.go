@@ -1,6 +1,7 @@
 package secretary
 
 import (
+	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
@@ -45,6 +46,7 @@ type SchoolYearRepository interface {
 
 type RegistrationRepository interface {
 	Create(registration entities.Registration) error
+	SearchStudentAlreadyRegistered(studentId uuid.UUID, classRoomId uuid.UUID) (string, error)
 }
 
 type StudentRepository interface {

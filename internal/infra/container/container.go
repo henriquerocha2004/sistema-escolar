@@ -4,9 +4,11 @@ import (
 	"database/sql"
 
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
+	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/repositories"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/http/controllers"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/uow"
 )
 
 type ContainerDependency struct {
@@ -18,6 +20,7 @@ type ContainerDependency struct {
 	classRoomRepository    secretary.ClassRoomRepository
 	serviceRepository      financial.ServiceRepository
 	registrationRepository secretary.RegistrationRepository
+	studentRepository      secretary.StudentRepository
 
 	roomActions         secretary.RoomActionsInterface
 	schoolYearActions   secretary.SchoolYearActionsInterface
@@ -32,6 +35,8 @@ type ContainerDependency struct {
 	classRoomController     *controllers.ClassRoomController
 	serviceController       *controllers.ServiceController
 	registrationController  *controllers.RegisterController
+
+	registerUow uow.RegisterUow
 }
 
 func (c *ContainerDependency) GetDB() *sql.DB {
@@ -46,7 +51,7 @@ func (c *ContainerDependency) GetDB() *sql.DB {
 
 func (c *ContainerDependency) GetRoomRepository() *secretary.RoomRepository {
 	if c.roomRepository == nil {
-		c.roomRepository = postgres.NewRoomRepository(
+		c.roomRepository = repositories.NewRoomRepository(
 			c.GetDB(),
 		)
 	}
@@ -56,7 +61,7 @@ func (c *ContainerDependency) GetRoomRepository() *secretary.RoomRepository {
 
 func (c *ContainerDependency) GetSchoolYearRepository() *secretary.SchoolYearRepository {
 	if c.schoolYearRepository == nil {
-		c.schoolYearRepository = postgres.NewSchoolYearRepository(
+		c.schoolYearRepository = repositories.NewSchoolYearRepository(
 			c.GetDB(),
 		)
 	}
@@ -66,7 +71,7 @@ func (c *ContainerDependency) GetSchoolYearRepository() *secretary.SchoolYearRep
 
 func (c *ContainerDependency) GetScheduleRepository() *secretary.ScheduleRoomRepository {
 	if c.scheduleRepository == nil {
-		c.scheduleRepository = postgres.NewScheduleRoomRepository(
+		c.scheduleRepository = repositories.NewScheduleRoomRepository(
 			c.GetDB(),
 		)
 	}
@@ -76,7 +81,7 @@ func (c *ContainerDependency) GetScheduleRepository() *secretary.ScheduleRoomRep
 
 func (c *ContainerDependency) GetClassRoomRepository() *secretary.ClassRoomRepository {
 	if c.classRoomRepository == nil {
-		c.classRoomRepository = postgres.NewClassRoomRepository(
+		c.classRoomRepository = repositories.NewClassRoomRepository(
 			c.GetDB(),
 		)
 	}
@@ -86,7 +91,7 @@ func (c *ContainerDependency) GetClassRoomRepository() *secretary.ClassRoomRepos
 
 func (c *ContainerDependency) GetServiceRepository() *financial.ServiceRepository {
 	if c.serviceRepository == nil {
-		c.serviceRepository = postgres.NewServiceRepository(
+		c.serviceRepository = repositories.NewServiceRepository(
 			c.GetDB(),
 		)
 	}
@@ -96,12 +101,22 @@ func (c *ContainerDependency) GetServiceRepository() *financial.ServiceRepositor
 
 func (c *ContainerDependency) GetRegisterRepository() *secretary.RegistrationRepository {
 	if c.registrationRepository == nil {
-		c.registrationRepository = postgres.NewRegistrationRepository(
+		c.registrationRepository = repositories.NewRegistrationRepository(
 			c.GetDB(),
 		)
 	}
 
 	return &c.registrationRepository
+}
+
+func (c *ContainerDependency) GetStudentRepository() *secretary.StudentRepository {
+	if c.studentRepository == nil {
+		c.studentRepository = repositories.NewStudentRepository(
+			c.GetDB(),
+		)
+	}
+
+	return &c.studentRepository
 }
 
 // Actions
@@ -162,11 +177,25 @@ func (c *ContainerDependency) GetRegistrationActions() secretary.RegistrationAct
 		c.registrationActions = secretary.NewRegistrationActions(
 			*c.GetServiceRepository(),
 			*c.GetClassRoomRepository(),
-			*c.GetRegisterRepository(),
+			c.GetRegistrationUow(),
 		)
 	}
 
 	return c.registrationActions
+}
+
+// Uow
+
+func (c *ContainerDependency) GetRegistrationUow() uow.RegisterUow {
+	if c.registerUow == nil {
+		c.registerUow = repositories.NewRegistrationUow(
+			c.GetDB(),
+			*repositories.NewStudentRepository(c.GetDB()),
+			*repositories.NewRegistrationRepository(c.GetDB()),
+		)
+	}
+
+	return c.registerUow
 }
 
 // Controllers

@@ -3,9 +3,10 @@ package entities
 import (
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
 )

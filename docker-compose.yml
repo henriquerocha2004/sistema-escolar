@@ -10,7 +10,7 @@ services:
         - .:/opt/app/api:rw
     command: air ./cmd/api/main.go
   database:
-    image: postgres:alpine3.18
+    image: arm64v8/postgres:alpine3.18
     container_name: app-database
     ports:
       - "9500:5432"

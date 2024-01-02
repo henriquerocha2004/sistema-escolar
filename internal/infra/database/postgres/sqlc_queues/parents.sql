@@ -4,3 +4,6 @@ INSERT INTO parents
 (id, first_name, last_name, birthday, rg_document, cpf_document, student_id, email, created_at, updated_at)
 VALUES
 ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);
+
+-- name: DeleteParentsByStudent :exec
+UPDATE parents SET deleted_at = $1 WHERE student_id = $2;

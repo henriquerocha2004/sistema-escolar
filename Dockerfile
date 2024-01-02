@@ -1,4 +1,4 @@
-FROM golang:1.20 as base
+FROM --platform=linux/amd64 golang:1.20 as base
 
 ENV GROUP_ID=1000 \
     USER_ID=1000

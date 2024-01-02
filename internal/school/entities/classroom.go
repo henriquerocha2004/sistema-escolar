@@ -2,9 +2,10 @@ package entities
 
 import (
 	"errors"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"time"
 )
 
 type ClassRoom struct {

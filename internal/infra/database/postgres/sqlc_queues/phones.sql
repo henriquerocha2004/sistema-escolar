@@ -4,3 +4,6 @@ INSERT INTO phones
 (id, description, phone, owner_id)
 VALUES
 ($1,$2,$3,$4);
+
+-- name: DeletePhonesByOwner :exec
+UPDATE phones SET deleted_at = $1 WHERE owner_id = $2;

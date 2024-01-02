@@ -7,3 +7,6 @@ INSERT INTO registrations
      enrollment_fee, due_date, month_duration, status,
      enrollment_date, school_year_id, created_at, updated_at)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16);
+
+    -- name: SearchStudentAlreadyRegistered :one
+    SELECT code FROM registrations WHERE class_room_id = $1 AND student_id = $2 LIMIT 1;

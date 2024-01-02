@@ -8,5 +8,5 @@ sql:
       go:
         json_tags_case_style: "snake"
         emit_json_tags: true
-        package: "postgres"
-        out: "./internal/infra/database/postgres"
+        package: "models"
+        out: "./internal/infra/database/postgres/models"
