@@ -3,9 +3,10 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/student"
 
 	"github.com/google/uuid"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/value_objects"
 )
 
@@ -62,7 +63,7 @@ func (r *RegistrationUow) Commit() error {
 	return nil
 }
 
-func (r *RegistrationUow) CreateStudent(student entities.Student) error {
+func (r *RegistrationUow) CreateStudent(student student.Student) error {
 
 	if r.tx == nil {
 		return errors.New("failed in create student. Transaction not started")
@@ -73,7 +74,7 @@ func (r *RegistrationUow) CreateStudent(student entities.Student) error {
 	return r.studentRepo.Create(student)
 }
 
-func (r *RegistrationUow) CreateRegister(register entities.Registration) error {
+func (r *RegistrationUow) CreateRegister(register registration.Registration) error {
 	if r.tx == nil {
 		return errors.New("failed in register student. Transaction not started")
 	}
@@ -89,7 +90,9 @@ func (r *RegistrationUow) StudentAlreadyExists(cpf string) (*uuid.UUID, error) {
 		return nil, err
 	}
 
-	return &student.Id, nil
+	id := student.Id()
+
+	return &id, nil
 }
 
 func (r *RegistrationUow) StudentAlreadyRegisterInClass(studentId uuid.UUID, classRoomId uuid.UUID) (bool, error) {

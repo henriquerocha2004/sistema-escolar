@@ -3,18 +3,29 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/models"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 )
 
 type SchoolYearRepository struct {
 	db     *sql.DB
 	queues *models.Queries
+}
+
+type schoolYearSearchModel struct {
+	Id      string
+	Year    string
+	StartAt string
+	EndAt   string
+	Total   int
 }
 
 func NewSchoolYearRepository(db *sql.DB) *SchoolYearRepository {
@@ -24,12 +35,13 @@ func NewSchoolYearRepository(db *sql.DB) *SchoolYearRepository {
 	}
 }
 
-func (s *SchoolYearRepository) Create(schoolYear entities.SchoolYear) error {
+func (s *SchoolYearRepository) Create(schoolYear *schoolyear.SchoolYear) error {
+
 	schoolYearModel := models.CreateYearSchoolParams{
-		ID:      schoolYear.Id,
-		Year:    schoolYear.Year,
-		StartAt: *schoolYear.StartedAt,
-		EndAt:   *schoolYear.EndAt,
+		ID:      schoolYear.Id(),
+		Year:    schoolYear.Year(),
+		StartAt: *schoolYear.StartAt(),
+		EndAt:   *schoolYear.EndAt(),
 		CreatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
@@ -63,23 +75,23 @@ func (s *SchoolYearRepository) Delete(id string) error {
 	return err
 }
 
-func (s *SchoolYearRepository) Update(schoolYear entities.SchoolYear) error {
+func (s *SchoolYearRepository) Update(schoolYear *schoolyear.SchoolYear) error {
 	schoolYearModel := models.UpdateSchoolYearParams{
-		Year:    schoolYear.Year,
-		StartAt: *schoolYear.StartedAt,
-		EndAt:   *schoolYear.EndAt,
+		Year:    schoolYear.Year(),
+		StartAt: *schoolYear.StartAt(),
+		EndAt:   *schoolYear.EndAt(),
 		UpdatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
 		},
-		ID: schoolYear.Id,
+		ID: schoolYear.Id(),
 	}
 
 	err := s.queues.UpdateSchoolYear(context.Background(), schoolYearModel)
 	return err
 }
 
-func (s *SchoolYearRepository) FindById(id string) (*entities.SchoolYear, error) {
+func (s *SchoolYearRepository) FindById(id string) (*schoolyear.SchoolYear, error) {
 
 	schoolYearId, _ := uuid.Parse(id)
 	schoolYearModel, err := s.queues.FindOneSchoolYear(context.Background(), schoolYearId)
@@ -87,38 +99,44 @@ func (s *SchoolYearRepository) FindById(id string) (*entities.SchoolYear, error)
 		return nil, err
 	}
 
-	schoolYear := entities.SchoolYear{
-		Id:        schoolYearModel.ID,
-		Year:      schoolYearModel.Year,
-		StartedAt: &schoolYearModel.StartAt,
-		EndAt:     &schoolYearModel.EndAt,
+	schoolYear, err := schoolyear.New(
+		schoolYearModel.Year,
+		schoolYearModel.StartAt.Format("2006-01-02"),
+		schoolYearModel.EndAt.Format("2006-01-02"))
+
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("failed to retrieve class room")
 	}
 
-	return &schoolYear, nil
+	return schoolYear, nil
 }
 
-func (s *SchoolYearRepository) FindByYear(year string) (*entities.SchoolYear, error) {
+func (s *SchoolYearRepository) FindByYear(year string) (*schoolyear.SchoolYear, error) {
 	schoolYearModel, err := s.queues.FindByYear(context.Background(), year)
 	if err != nil {
 		return nil, err
 	}
 
-	schoolYear := entities.SchoolYear{
-		Id:        schoolYearModel.ID,
-		Year:      schoolYearModel.Year,
-		StartedAt: &schoolYearModel.StartAt,
-		EndAt:     &schoolYearModel.EndAt,
+	schoolYear, err := schoolyear.New(
+		schoolYearModel.Year,
+		schoolYearModel.StartAt.Format("2006-01-02"),
+		schoolYearModel.EndAt.Format("2006-01-02"))
+
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("failed to retrieve class room")
 	}
 
-	return &schoolYear, nil
+	return schoolYear, nil
 }
 
-func (s *SchoolYearRepository) FindAll(paginator common.Pagination) (*common.SchoolYearPaginationResult, error) {
+func (s *SchoolYearRepository) FindAll(pagination paginator.Pagination) (*paginator.PaginationResult, error) {
 	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelQuery()
 
-	query := "SELECT id as id, year, start_at, end_at FROM school_year WHERE year like $1 AND deleted_at IS NULL"
-	filters := paginator.FiltersInSql()
+	query := "SELECT id as id, year, start_at, end_at, COUNT(*) OVER() as total FROM school_year WHERE year like $1 AND deleted_at IS NULL"
+	filters := pagination.FiltersInSql()
 
 	if filters != "" {
 		query += filters
@@ -131,58 +149,100 @@ func (s *SchoolYearRepository) FindAll(paginator common.Pagination) (*common.Sch
 
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx,
-		"%"+paginator.Search+"%",
+		"%"+pagination.Search+"%",
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var schoolYears []entities.SchoolYear
-
-	for rows.Next() {
-		var schoolYear entities.SchoolYear
-		err = rows.Scan(&schoolYear.Id, &schoolYear.Year, &schoolYear.StartedAt, &schoolYear.EndAt)
-		if err != nil {
-			return nil, err
-		}
-
-		schoolYears = append(schoolYears, schoolYear)
-	}
-
+	var schoolYearsSearchModels []schoolYearSearchModel
 	var total int
-	queryCount := "SELECT COUNT(*) as total FROM school_year WHERE year like $1 AND deleted_at IS NULL"
-	columnFilter := paginator.GetColumnFilter()
-	if columnFilter != "" {
-		queryCount += columnFilter
-	}
-
-	stmtCount, err := s.db.PrepareContext(ctx, queryCount)
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmtCount.Close()
-
-	rows, err = stmtCount.QueryContext(ctx,
-		"%"+paginator.Search+"%",
-	)
-
-	if err != nil {
-		return nil, err
-	}
 
 	for rows.Next() {
-		err = rows.Scan(&total)
+		var schoolYearSearchModel schoolYearSearchModel
+		err = rows.Scan(
+			schoolYearSearchModel.Id,
+			schoolYearSearchModel.Year,
+			schoolYearSearchModel.StartAt,
+			schoolYearSearchModel.EndAt,
+			total)
 		if err != nil {
 			return nil, err
 		}
+
+		schoolYearsSearchModels = append(schoolYearsSearchModels, schoolYearSearchModel)
 	}
 
-	paginationResult := common.SchoolYearPaginationResult{
-		Total:       total,
-		SchoolYears: schoolYears,
+	var schoolYears []schoolyear.SchoolYear
+
+	for _, schoolYearModel := range schoolYearsSearchModels {
+		schoolYear, err := schoolyear.New(
+			schoolYearModel.Year,
+			schoolYearModel.StartAt,
+			schoolYearModel.EndAt)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = schoolYear.SetId(schoolYearModel.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		schoolYears = append(schoolYears, *schoolYear)
+	}
+
+	paginationResult := paginator.PaginationResult{
+		Total: total,
+		Data:  schoolYears,
 	}
 
 	return &paginationResult, nil
+}
+
+func (r *RoomRepository) SyncSchedule(scheduleDto schedule.RoomScheduleDto) error {
+
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	r.queues.WithTx(tx)
+	roomId, _ := uuid.Parse(scheduleDto.RoomId)
+	schoolYearId, _ := uuid.Parse(scheduleDto.SchoolYear)
+
+	unbindParams := models.UnbindScheduleParams{
+		RoomID:       roomId,
+		SchoolYearID: schoolYearId,
+	}
+
+	err = r.queues.UnbindSchedule(context.Background(), unbindParams)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	for _, scheduleId := range scheduleDto.ScheduleIds {
+
+		scheduleId, _ := uuid.Parse(scheduleId)
+
+		bindParams := models.BindScheduleParams{
+			RoomID:       roomId,
+			ScheduleID:   scheduleId,
+			SchoolYearID: schoolYearId,
+		}
+
+		err = r.queues.BindSchedule(context.Background(), bindParams)
+		if err != nil {
+			log.Println(err)
+			_ = tx.Rollback()
+			return err
+		}
+	}
+
+	_ = tx.Commit()
+
+	return nil
 }

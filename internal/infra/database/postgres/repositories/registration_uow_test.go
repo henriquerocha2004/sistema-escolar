@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities/student"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
 	"log"
 	"os"
 	"testing"
@@ -8,8 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/value_objects"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ func init() {
 
 func TestUowRegistration(t *testing.T) {
 
-	student := entities.Student{
+	student := student.Student{
 		Id:                 uuid.New(),
 		FirstName:          "Pedrinho",
 		LastName:           "Souza",
@@ -36,7 +36,7 @@ func TestUowRegistration(t *testing.T) {
 		HimSelfResponsible: true,
 	}
 
-	address := []dto.AddressDto{
+	address := []registration.AddressDto{
 		{
 			Street:   "Rua dos Bobos",
 			City:     "SSA",
@@ -48,7 +48,7 @@ func TestUowRegistration(t *testing.T) {
 
 	student.AddAddress(address)
 
-	phone := []dto.PhoneDto{
+	phone := []registration.PhoneDto{
 		{
 			Description: "Pessoal",
 			Phone:       "71589955554",

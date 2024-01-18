@@ -80,7 +80,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryParamsInCreateRoom(t *testing.T) 
 
 func TestShouldCreateRoomWithSuccess(t *testing.T) {
 	actionRoom := new(mocks.RoomActionsMock)
-	actionRoom.On("Create", mock.AnythingOfType("dto.RoomRequestDto")).Return(nil)
+	actionRoom.On("Create", mock.AnythingOfType("paginator.RoomRequestDto")).Return(nil)
 	roomController := NewRoomController(actionRoom)
 
 	app := fiber.New()
@@ -157,7 +157,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryDataInUpdate(t *testing.T) {
 
 func TestShouldUpdateRoomWithSuccess(t *testing.T) {
 	actionRoom := new(mocks.RoomActionsMock)
-	actionRoom.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("dto.RoomRequestDto")).Return(nil)
+	actionRoom.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("paginator.RoomRequestDto")).Return(nil)
 	roomController := NewRoomController(actionRoom)
 	data := `{"code" : "SL-01", "description" : "desc", "capacity" : 20}`
 	app := fiber.New()

@@ -2,16 +2,14 @@ package repositories
 
 import (
 	"database/sql"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 	"log"
 	"os"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	testTools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 )
@@ -52,67 +50,56 @@ func TestManagerService(t *testing.T) {
 }
 
 func (s *TestServiceSuit) TestShouldCreateService() {
-
-	service := entities.Service{
-		Id:          uuid.New(),
-		Description: "Ensino Fundamental",
-		Price:       440.00,
-	}
-
-	err := s.repository.Create(service)
+	service, err := service.New("Ensino Fundamental", 440.00)
+	s.Assert().NoError(err)
+	err = s.repository.Create(*service)
 	s.Assert().NoError(err)
 }
 
 func (s *TestServiceSuit) TestShouldUpdateSchoolYear() {
-	service := entities.Service{
-		Id:          uuid.New(),
-		Description: "Ensino Fundamental",
-		Price:       440.00,
-	}
 
-	err := s.repository.Create(service)
+	service, err := service.New("Ensino Fundamental", 440.00)
 	s.Assert().NoError(err)
 
-	service.Description = "Ensino Médio"
-	err = s.repository.Update(service)
+	err = s.repository.Create(*service)
 	s.Assert().NoError(err)
 
-	serviceDb, err := s.repository.FindById(service.Id.String())
+	err = service.ChangeDescription("Ensino Médio")
+	s.Assert().NoError(err)
+
+	err = s.repository.Update(*service)
+	s.Assert().NoError(err)
+
+	serviceDb, err := s.repository.FindById(service.Id().String())
 	s.Assert().NoError(err)
 	s.Assert().Equal(service.Description, serviceDb.Description)
 }
 
 func (s *TestServiceSuit) TestShouldDeleteSchoolYear() {
 
-	service := entities.Service{
-		Id:          uuid.New(),
-		Description: "Ensino Fundamental",
-		Price:       440.00,
-	}
-
-	err := s.repository.Create(service)
+	service, err := service.New("Ensino Fundamental", 440.00)
 	s.Assert().NoError(err)
 
-	err = s.repository.Delete(service.Id.String())
+	err = s.repository.Create(*service)
 	s.Assert().NoError(err)
 
-	serviceDb, err := s.repository.FindById(service.Id.String())
+	err = s.repository.Delete(service.Id().String())
+	s.Assert().NoError(err)
+
+	serviceDb, err := s.repository.FindById(service.Id().String())
 	s.Assert().Error(err)
 	s.Assert().Nil(serviceDb)
 }
 
 func (s *TestServiceSuit) TestShouldFindByServiceDescription() {
-	service := entities.Service{
-		Id:          uuid.New(),
-		Description: "Ensino Fundamental",
-		Price:       440.00,
-	}
-
-	err := s.repository.Create(service)
+	srvice, err := service.New("Ensino Fundamental", 440.00)
 	s.Assert().NoError(err)
 
-	pagination := common.Pagination{}
-	pagination.ColumnSearch = append(pagination.ColumnSearch, dto.ColumnSearch{
+	err = s.repository.Create(*srvice)
+	s.Assert().NoError(err)
+
+	pagination := paginator.Pagination{}
+	pagination.ColumnSearch = append(pagination.ColumnSearch, paginator.ColumnSearch{
 		Column: "description",
 		Value:  "Ensino Fundamental",
 	})
@@ -120,5 +107,5 @@ func (s *TestServiceSuit) TestShouldFindByServiceDescription() {
 
 	paginationResult, err := s.repository.FindAll(pagination)
 	s.Assert().NoError(err)
-	s.Assert().Equal(1, len(paginationResult.Services))
+	s.Assert().Equal(1, len(paginationResult.Data.([]service.Service)))
 }

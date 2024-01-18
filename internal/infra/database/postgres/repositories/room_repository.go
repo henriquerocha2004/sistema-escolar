@@ -3,20 +3,25 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"log"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/models"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 )
 
 type RoomRepository struct {
 	db     *sql.DB
 	queues *models.Queries
+}
+
+type roomSearchModel struct {
+	ID          uuid.UUID `json:"id"`
+	Code        string    `json:"code"`
+	Description string    `json:"description"`
+	Capacity    int32     `json:"capacity"`
+	Total       int       `json:"total"`
 }
 
 func NewRoomRepository(db *sql.DB) *RoomRepository {
@@ -26,12 +31,12 @@ func NewRoomRepository(db *sql.DB) *RoomRepository {
 	}
 }
 
-func (r *RoomRepository) Create(room entities.Room) error {
+func (r *RoomRepository) Create(room room.Room) error {
 	roomModel := models.CreateRoomParams{
-		ID:          room.Id,
-		Code:        room.Code,
-		Description: room.Description,
-		Capacity:    int32(room.Capacity),
+		ID:          room.Id(),
+		Code:        room.Code(),
+		Description: room.Description(),
+		Capacity:    int32(room.Capacity()),
 		CreatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
@@ -70,16 +75,16 @@ func (r *RoomRepository) Delete(id string) error {
 	return err
 }
 
-func (r *RoomRepository) Update(room entities.Room) error {
+func (r *RoomRepository) Update(room room.Room) error {
 	roomModel := &models.UpdateRoomParams{
-		Code:        room.Code,
-		Description: room.Description,
-		Capacity:    int32(room.Capacity),
+		Code:        room.Code(),
+		Description: room.Description(),
+		Capacity:    int32(room.Capacity()),
 		UpdatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
 		},
-		ID: room.Id,
+		ID: room.Id(),
 	}
 
 	err := r.queues.UpdateRoom(context.Background(), *roomModel)
@@ -87,7 +92,7 @@ func (r *RoomRepository) Update(room entities.Room) error {
 	return err
 }
 
-func (r *RoomRepository) FindById(id string) (*entities.Room, error) {
+func (r *RoomRepository) FindById(id string) (*room.Room, error) {
 	roomId, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
@@ -97,39 +102,43 @@ func (r *RoomRepository) FindById(id string) (*entities.Room, error) {
 		return nil, err
 	}
 
-	room := entities.Room{
-		Id:          roomModel.ID,
-		Code:        roomModel.Code,
-		Description: roomModel.Description,
-		Capacity:    int(roomModel.Capacity),
-	}
+	room, err := room.Load(
+		roomModel.ID.String(),
+		roomModel.Code,
+		roomModel.Description,
+		int(roomModel.Capacity),
+	)
 
-	return &room, nil
+	return room, err
 }
 
-func (r *RoomRepository) FindByCode(code string) (*entities.Room, error) {
+func (r *RoomRepository) FindByCode(code string) (*room.Room, error) {
 	roomModel, err := r.queues.FindByCode(context.Background(), code)
 	if err != nil {
 		return nil, err
 	}
 
-	room := entities.Room{
-		Id:          roomModel.ID,
-		Code:        roomModel.Code,
-		Description: roomModel.Description,
-		Capacity:    int(roomModel.Capacity),
-	}
+	room, err := room.Load(
+		roomModel.ID.String(),
+		roomModel.Code,
+		roomModel.Description,
+		int(roomModel.Capacity),
+	)
 
-	return &room, nil
+	return room, err
 }
 
-func (r *RoomRepository) FindAll(paginator common.Pagination) (*common.RoomPaginationResult, error) {
+func (r *RoomRepository) FindAll(pagination paginator.Pagination) (*paginator.PaginationResult, error) {
 
 	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelQuery()
 
-	query := "SELECT id, code, description, capacity FROM rooms WHERE (code like $1 OR description like $2) AND deleted_at IS NULL"
-	filters := paginator.FiltersInSql()
+	query := `SELECT id, code, description, capacity, COUNT(*) OVER() as total 
+				FROM rooms 
+		WHERE (code like $1 OR description like $2) 
+		   AND deleted_at IS NULL`
+
+	filters := pagination.FiltersInSql()
 
 	if filters != "" {
 		query += filters
@@ -142,105 +151,48 @@ func (r *RoomRepository) FindAll(paginator common.Pagination) (*common.RoomPagin
 
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx,
-		"%"+paginator.Search+"%",
-		"%"+paginator.Search+"%",
+		"%"+pagination.Search+"%",
+		"%"+pagination.Search+"%",
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var rooms []entities.Room
+	var roomsModels []roomSearchModel
 
 	for rows.Next() {
-		var room entities.Room
-		err = rows.Scan(&room.Id, &room.Code, &room.Description, &room.Capacity)
+		var roomModel roomSearchModel
+		err = rows.Scan(&roomModel.ID, &roomModel.Code, &roomModel.Description, &roomModel.Capacity, &roomModel.Total)
 		if err != nil {
 			return nil, err
 		}
 
-		rooms = append(rooms, room)
+		roomsModels = append(roomsModels, roomModel)
 	}
 
-	var total int
-	queryCount := "SELECT COUNT(*) as total FROM rooms WHERE (code like $1 OR description like $2) AND deleted_at IS NULL"
-	columnFilter := paginator.GetColumnFilter()
-	if columnFilter != "" {
-		queryCount += columnFilter
-	}
+	var rooms []room.Room
 
-	stmtCount, err := r.db.PrepareContext(ctx, queryCount)
-	if err != nil {
-		return nil, err
-	}
+	for _, roomModel := range roomsModels {
 
-	defer stmtCount.Close()
+		room, err := room.Load(
+			roomModel.ID.String(),
+			roomModel.Code,
+			roomModel.Description,
+			int(roomModel.Capacity),
+		)
 
-	rows, err = stmtCount.QueryContext(ctx,
-		"%"+paginator.Search+"%",
-		"%"+paginator.Search+"%",
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		err = rows.Scan(&total)
 		if err != nil {
 			return nil, err
 		}
+
+		rooms = append(rooms, *room)
 	}
 
-	roomPaginationResult := common.RoomPaginationResult{
-		Total: total,
-		Rooms: rooms,
+	roomPaginationResult := paginator.PaginationResult{
+		Total: roomsModels[0].Total,
+		Data:  rooms,
 	}
 
 	return &roomPaginationResult, nil
-}
-
-func (r *RoomRepository) SyncSchedule(scheduleDto dto.RoomScheduleDto) error {
-
-	tx, err := r.db.Begin()
-	if err != nil {
-		return err
-	}
-
-	r.queues.WithTx(tx)
-	roomId, _ := uuid.Parse(scheduleDto.RoomId)
-	schoolYearId, _ := uuid.Parse(scheduleDto.SchoolYear)
-
-	unbindParams := models.UnbindScheduleParams{
-		RoomID:       roomId,
-		SchoolYearID: schoolYearId,
-	}
-
-	err = r.queues.UnbindSchedule(context.Background(), unbindParams)
-	if err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-
-	for _, scheduleId := range scheduleDto.ScheduleIds {
-
-		scheduleId, _ := uuid.Parse(scheduleId)
-
-		bindParams := models.BindScheduleParams{
-			RoomID:       roomId,
-			ScheduleID:   scheduleId,
-			SchoolYearID: schoolYearId,
-		}
-
-		err = r.queues.BindSchedule(context.Background(), bindParams)
-		if err != nil {
-			log.Println(err)
-			_ = tx.Rollback()
-			return err
-		}
-	}
-
-	_ = tx.Commit()
-
-	return nil
 }

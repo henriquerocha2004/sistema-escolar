@@ -1,8 +1,8 @@
 package presenters
 
 import (
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 )
 
 type WebSchoolYearPaginationResultPresenter struct {
@@ -26,7 +26,7 @@ func (w *WebSchoolYearPresenter) FillSingleSchoolYearPresenter(schoolYear entiti
 	}
 }
 
-func (w *WebSchoolYearPresenter) FillMultipleSchoolYearPresenter(paginationResult common.SchoolYearPaginationResult) WebSchoolYearPaginationResultPresenter {
+func (w *WebSchoolYearPresenter) FillMultipleSchoolYearPresenter(paginationResult paginator.SchoolYearPaginationResult) WebSchoolYearPaginationResultPresenter {
 
 	var presenter WebSchoolYearPaginationResultPresenter
 	presenter.Total = paginationResult.Total

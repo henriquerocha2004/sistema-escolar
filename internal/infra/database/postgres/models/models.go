@@ -47,7 +47,8 @@ type ClassRoom struct {
 type ClassSchedule struct {
 	ID           uuid.UUID    `json:"id"`
 	Description  string       `json:"description"`
-	Schedule     string       `json:"schedule"`
+	StartAt      time.Time    `json:"start_at"`
+	EndAt        time.Time    `json:"end_at"`
 	SchoolYearID uuid.UUID    `json:"school_year_id"`
 	CreatedAt    sql.NullTime `json:"created_at"`
 	UpdatedAt    sql.NullTime `json:"updated_at"`

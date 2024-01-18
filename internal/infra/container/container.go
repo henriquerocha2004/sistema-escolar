@@ -2,32 +2,41 @@ package container
 
 import (
 	"database/sql"
-
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/repositories"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/http/controllers"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/uow"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service/serviceActions"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom/classRoomService"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration/registrationService"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room/roomService"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule/scheduleService"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear/schoolYearService"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/student"
 )
 
 type ContainerDependency struct {
 	db *sql.DB
 
-	roomRepository         secretary.RoomRepository
-	schoolYearRepository   secretary.SchoolYearRepository
-	scheduleRepository     secretary.ScheduleRoomRepository
-	classRoomRepository    secretary.ClassRoomRepository
-	serviceRepository      financial.ServiceRepository
-	registrationRepository secretary.RegistrationRepository
-	studentRepository      secretary.StudentRepository
+	roomRepository         room.Repository
+	schoolYearRepository   schoolyear.Repository
+	scheduleRepository     schedule.Repository
+	classRoomRepository    classroom.Repository
+	serviceRepository      service.Repository
+	registrationRepository registration.Repository
+	studentRepository      student.Repository
 
-	roomActions         secretary.RoomActionsInterface
-	schoolYearActions   secretary.SchoolYearActionsInterface
-	scheduleRoomActions secretary.ScheduleActionsInterface
-	classRoomActions    secretary.ClassRoomActionsInterface
-	serviceActions      financial.ServiceActionsInterface
-	registrationActions secretary.RegistrationActionsInterface
+	roomActions         roomService.ServiceRoomInterface
+	schoolYearActions   schoolYearService.SchoolYearActionsInterface
+	scheduleRoomActions scheduleService.ServiceScheduleInterface
+	classRoomActions    classRoomService.ServiceClassRoomInterface
+	serviceActions      serviceActions.ActionsServiceInterface
+	registrationActions registrationService.RegistrationActionsInterface
 
 	roomController          *controllers.RoomController
 	schoolYearController    *controllers.SchoolYearController
@@ -36,7 +45,7 @@ type ContainerDependency struct {
 	serviceController       *controllers.ServiceController
 	registrationController  *controllers.RegisterController
 
-	registerUow uow.RegisterUow
+	registerUow registration.RegisterUow
 }
 
 func (c *ContainerDependency) GetDB() *sql.DB {
@@ -49,7 +58,7 @@ func (c *ContainerDependency) GetDB() *sql.DB {
 
 // Repository
 
-func (c *ContainerDependency) GetRoomRepository() *secretary.RoomRepository {
+func (c *ContainerDependency) GetRoomRepository() *room.Repository {
 	if c.roomRepository == nil {
 		c.roomRepository = repositories.NewRoomRepository(
 			c.GetDB(),
@@ -59,7 +68,7 @@ func (c *ContainerDependency) GetRoomRepository() *secretary.RoomRepository {
 	return &c.roomRepository
 }
 
-func (c *ContainerDependency) GetSchoolYearRepository() *secretary.SchoolYearRepository {
+func (c *ContainerDependency) GetSchoolYearRepository() *schoolyear.Repository {
 	if c.schoolYearRepository == nil {
 		c.schoolYearRepository = repositories.NewSchoolYearRepository(
 			c.GetDB(),
@@ -69,7 +78,7 @@ func (c *ContainerDependency) GetSchoolYearRepository() *secretary.SchoolYearRep
 	return &c.schoolYearRepository
 }
 
-func (c *ContainerDependency) GetScheduleRepository() *secretary.ScheduleRoomRepository {
+func (c *ContainerDependency) GetScheduleRepository() *schedule.Repository {
 	if c.scheduleRepository == nil {
 		c.scheduleRepository = repositories.NewScheduleRoomRepository(
 			c.GetDB(),
@@ -79,7 +88,7 @@ func (c *ContainerDependency) GetScheduleRepository() *secretary.ScheduleRoomRep
 	return &c.scheduleRepository
 }
 
-func (c *ContainerDependency) GetClassRoomRepository() *secretary.ClassRoomRepository {
+func (c *ContainerDependency) GetClassRoomRepository() *classroom.Repository {
 	if c.classRoomRepository == nil {
 		c.classRoomRepository = repositories.NewClassRoomRepository(
 			c.GetDB(),
@@ -89,7 +98,7 @@ func (c *ContainerDependency) GetClassRoomRepository() *secretary.ClassRoomRepos
 	return &c.classRoomRepository
 }
 
-func (c *ContainerDependency) GetServiceRepository() *financial.ServiceRepository {
+func (c *ContainerDependency) GetServiceRepository() *service.Repository {
 	if c.serviceRepository == nil {
 		c.serviceRepository = repositories.NewServiceRepository(
 			c.GetDB(),
@@ -99,7 +108,7 @@ func (c *ContainerDependency) GetServiceRepository() *financial.ServiceRepositor
 	return &c.serviceRepository
 }
 
-func (c *ContainerDependency) GetRegisterRepository() *secretary.RegistrationRepository {
+func (c *ContainerDependency) GetRegisterRepository() *registration.Repository {
 	if c.registrationRepository == nil {
 		c.registrationRepository = repositories.NewRegistrationRepository(
 			c.GetDB(),
@@ -109,7 +118,7 @@ func (c *ContainerDependency) GetRegisterRepository() *secretary.RegistrationRep
 	return &c.registrationRepository
 }
 
-func (c *ContainerDependency) GetStudentRepository() *secretary.StudentRepository {
+func (c *ContainerDependency) GetStudentRepository() *student.Repository {
 	if c.studentRepository == nil {
 		c.studentRepository = repositories.NewStudentRepository(
 			c.GetDB(),
@@ -121,9 +130,9 @@ func (c *ContainerDependency) GetStudentRepository() *secretary.StudentRepositor
 
 // Actions
 
-func (c *ContainerDependency) GetRoomActions() secretary.RoomActionsInterface {
+func (c *ContainerDependency) GetRoomActions() roomService.ServiceRoomInterface {
 	if c.roomActions == nil {
-		c.roomActions = secretary.NewRoomActions(
+		c.roomActions = roomService.New(
 			*c.GetRoomRepository(),
 		)
 	}
@@ -131,9 +140,9 @@ func (c *ContainerDependency) GetRoomActions() secretary.RoomActionsInterface {
 	return c.roomActions
 }
 
-func (c *ContainerDependency) GetSchoolYearActions() secretary.SchoolYearActionsInterface {
+func (c *ContainerDependency) GetSchoolYearActions() schoolYearService.SchoolYearActionsInterface {
 	if c.schoolYearActions == nil {
-		c.schoolYearActions = secretary.NewSchoolYearActions(
+		c.schoolYearActions = schoolYearService.New(
 			*c.GetSchoolYearRepository(),
 		)
 	}
@@ -141,9 +150,9 @@ func (c *ContainerDependency) GetSchoolYearActions() secretary.SchoolYearActions
 	return c.schoolYearActions
 }
 
-func (c *ContainerDependency) GetScheduleRoomActions() secretary.ScheduleActionsInterface {
+func (c *ContainerDependency) GetScheduleRoomActions() scheduleService.ServiceScheduleInterface {
 	if c.scheduleRoomActions == nil {
-		c.scheduleRoomActions = secretary.NewScheduleClassActions(
+		c.scheduleRoomActions = scheduleService.New(
 			*c.GetScheduleRepository(),
 			*c.GetSchoolYearRepository(),
 		)
@@ -152,9 +161,9 @@ func (c *ContainerDependency) GetScheduleRoomActions() secretary.ScheduleActions
 	return c.scheduleRoomActions
 }
 
-func (c *ContainerDependency) GetClassRoomActions() secretary.ClassRoomActionsInterface {
+func (c *ContainerDependency) GetClassRoomActions() classRoomService.ServiceClassRoomInterface {
 	if c.classRoomActions == nil {
-		c.classRoomActions = secretary.NewClassRoomActions(
+		c.classRoomActions = classRoomService.New(
 			*c.GetClassRoomRepository(),
 		)
 	}
@@ -162,9 +171,9 @@ func (c *ContainerDependency) GetClassRoomActions() secretary.ClassRoomActionsIn
 	return c.classRoomActions
 }
 
-func (c *ContainerDependency) GetServiceActions() financial.ServiceActionsInterface {
+func (c *ContainerDependency) GetServiceActions() serviceActions.ActionsServiceInterface {
 	if c.serviceActions == nil {
-		c.serviceActions = financial.NewServiceActions(
+		c.serviceActions = serviceActions.New(
 			*c.GetServiceRepository(),
 		)
 	}
@@ -172,9 +181,9 @@ func (c *ContainerDependency) GetServiceActions() financial.ServiceActionsInterf
 	return c.serviceActions
 }
 
-func (c *ContainerDependency) GetRegistrationActions() secretary.RegistrationActionsInterface {
+func (c *ContainerDependency) GetRegistrationActions() registrationService.RegistrationActionsInterface {
 	if c.registrationActions == nil {
-		c.registrationActions = secretary.NewRegistrationActions(
+		c.registrationActions = registrationService.NewRegistrationActions(
 			*c.GetServiceRepository(),
 			*c.GetClassRoomRepository(),
 			c.GetRegistrationUow(),
@@ -186,7 +195,7 @@ func (c *ContainerDependency) GetRegistrationActions() secretary.RegistrationAct
 
 // Uow
 
-func (c *ContainerDependency) GetRegistrationUow() uow.RegisterUow {
+func (c *ContainerDependency) GetRegistrationUow() registration.RegisterUow {
 	if c.registerUow == nil {
 		c.registerUow = repositories.NewRegistrationUow(
 			c.GetDB(),

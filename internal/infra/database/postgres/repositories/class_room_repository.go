@@ -3,13 +3,33 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/models"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 )
+
+type classRoomSearchModel struct {
+	ID                uuid.UUID      `json:"id"`
+	Status            string         `json:"status"`
+	Active            bool           `json:"active"`
+	Identification    string         `json:"identification"`
+	Vacancies         int32          `json:"vacancies"`
+	VacanciesOccupied int32          `json:"vacancies_occupied"`
+	Shift             string         `json:"shift"`
+	Level             string         `json:"level"`
+	Localization      sql.NullString `json:"localization"`
+	OpenDate          time.Time      `json:"open_date"`
+	SchoolYearID      uuid.UUID      `json:"school_year_id"`
+	RoomID            uuid.NullUUID  `json:"room_id"`
+	ScheduleID        uuid.UUID      `json:"schedule_id"`
+	CreatedAt         sql.NullTime   `json:"created_at"`
+	UpdatedAt         sql.NullTime   `json:"updated_at"`
+	Type              string         `json:"type"`
+	Total             int
+}
 
 type ClassRoomRepository struct {
 	db     *sql.DB
@@ -23,23 +43,23 @@ func NewClassRoomRepository(db *sql.DB) *ClassRoomRepository {
 	}
 }
 
-func (c *ClassRoomRepository) Create(classRoom entities.ClassRoom) error {
+func (c *ClassRoomRepository) Create(classRoom classroom.ClassRoom) error {
 
 	classRoomModel := models.CreateClassParams{
-		ID:             classRoom.Id,
-		SchoolYearID:   classRoom.SchoolYearId,
-		ScheduleID:     classRoom.ScheduleId,
-		RoomID:         classRoom.RoomId,
-		Status:         classRoom.Status,
-		Identification: classRoom.Identification,
-		Level:          classRoom.Level,
+		ID:             classRoom.Id(),
+		SchoolYearID:   classRoom.SchoolYearId(),
+		ScheduleID:     classRoom.ScheduleId(),
+		RoomID:         classRoom.RoomId(),
+		Status:         classRoom.Status(),
+		Identification: classRoom.Identification(),
+		Level:          classRoom.Level(),
 		Localization: sql.NullString{
-			String: classRoom.Localization,
+			String: classRoom.Localization(),
 			Valid:  true,
 		},
-		OpenDate:  *classRoom.OpenDate,
-		Shift:     classRoom.Shift,
-		Vacancies: int32(classRoom.VacancyQuantity),
+		OpenDate:  classRoom.OpenDate(),
+		Shift:     classRoom.Shift(),
+		Vacancies: int32(classRoom.VacancyQuantity()),
 		CreatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
@@ -48,7 +68,7 @@ func (c *ClassRoomRepository) Create(classRoom entities.ClassRoom) error {
 			Time:  time.Now(),
 			Valid: true,
 		},
-		Type: classRoom.Type,
+		Type: classRoom.TypeClass(),
 	}
 
 	err := c.queues.CreateClass(context.Background(), classRoomModel)
@@ -77,22 +97,22 @@ func (c *ClassRoomRepository) Delete(id string) error {
 	return err
 }
 
-func (c *ClassRoomRepository) Update(classRoom entities.ClassRoom) error {
+func (c *ClassRoomRepository) Update(classRoom classroom.ClassRoom) error {
 	classRoomModel := models.UpdateClassParams{
-		ID:             classRoom.Id,
-		SchoolYearID:   classRoom.SchoolYearId,
-		ScheduleID:     classRoom.ScheduleId,
-		RoomID:         classRoom.RoomId,
-		Status:         classRoom.Status,
-		Identification: classRoom.Identification,
-		Level:          classRoom.Level,
+		ID:             classRoom.Id(),
+		SchoolYearID:   classRoom.SchoolYearId(),
+		ScheduleID:     classRoom.ScheduleId(),
+		RoomID:         classRoom.RoomId(),
+		Status:         classRoom.Status(),
+		Identification: classRoom.Identification(),
+		Level:          classRoom.Level(),
 		Localization: sql.NullString{
-			String: classRoom.Localization,
+			String: classRoom.Localization(),
 			Valid:  true,
 		},
 		OpenDate:  time.Now(),
-		Shift:     classRoom.Shift,
-		Vacancies: int32(classRoom.VacancyQuantity),
+		Shift:     classRoom.Shift(),
+		Vacancies: int32(classRoom.VacancyQuantity()),
 		UpdatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
@@ -103,7 +123,7 @@ func (c *ClassRoomRepository) Update(classRoom entities.ClassRoom) error {
 	return err
 }
 
-func (c *ClassRoomRepository) FindById(id string) (*entities.ClassRoom, error) {
+func (c *ClassRoomRepository) FindById(id string) (*classroom.ClassRoom, error) {
 	classId, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
@@ -114,27 +134,33 @@ func (c *ClassRoomRepository) FindById(id string) (*entities.ClassRoom, error) {
 		return nil, err
 	}
 
-	classRoom := entities.ClassRoom{
-		Id:              classRoomModel.ID,
-		VacancyQuantity: int(classRoomModel.Vacancies),
-		Shift:           classRoomModel.Shift,
-		OpenDate:        &classRoomModel.OpenDate,
-		Status:          classRoomModel.Status,
-		Level:           classRoomModel.Level,
-		Identification:  classRoomModel.Identification,
-		SchoolYearId:    classRoomModel.SchoolYearID,
-		RoomId:          classRoomModel.RoomID,
-		ScheduleId:      classRoomModel.ScheduleID,
-		Localization:    classRoomModel.Localization.String,
-		Type:            classRoomModel.Type,
+	classRoom, err := classroom.Load(
+		classRoomModel.ID.String(),
+		classRoomModel.Active,
+		classRoomModel.Status,
+		int(classRoomModel.VacanciesOccupied),
+		int(classRoomModel.Vacancies),
+		classRoomModel.OpenDate.String(),
+		classRoomModel.Shift,
+		classRoomModel.Level,
+		classRoomModel.Identification,
+		classRoomModel.SchoolYearID.String(),
+		classRoomModel.RoomID.UUID.String(),
+		classRoomModel.ScheduleID.String(),
+		classRoomModel.Localization.String,
+		classRoomModel.Type,
+	)
+
+	if err != nil {
+		return nil, err
 	}
 
-	return &classRoom, nil
+	return classRoom, nil
 }
 
-// FindByIdLock: Funcao que busca pelo ID da classe, porém ela faz o lock do registro no banco
+// FindByIdLock FindByIdLock: Funcao que busca pelo ID da classe, porém ela faz o lock do registro no banco
 // para evitar problemas de race conditions
-func (c *ClassRoomRepository) FindByIdLock(id string) (*entities.ClassRoom, error) {
+func (c *ClassRoomRepository) FindByIdLock(id string) (*classroom.ClassRoom, error) {
 	classId, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
@@ -145,32 +171,36 @@ func (c *ClassRoomRepository) FindByIdLock(id string) (*entities.ClassRoom, erro
 		return nil, err
 	}
 
-	classRoom := entities.ClassRoom{
-		Id:              classRoomModel.ID,
-		VacancyQuantity: int(classRoomModel.Vacancies),
-		Shift:           classRoomModel.Shift,
-		OpenDate:        &classRoomModel.OpenDate,
-		Status:          classRoomModel.Status,
-		Level:           classRoomModel.Level,
-		Identification:  classRoomModel.Identification,
-		SchoolYearId:    classRoomModel.SchoolYearID,
-		RoomId:          classRoomModel.RoomID,
-		ScheduleId:      classRoomModel.ScheduleID,
-		Localization:    classRoomModel.Localization.String,
-		Type:            classRoomModel.Type,
-	}
+	classRoom, err := classroom.Load(
+		classRoomModel.ID.String(),
+		classRoomModel.Active,
+		classRoomModel.Status,
+		int(classRoomModel.VacanciesOccupied),
+		int(classRoomModel.Vacancies),
+		classRoomModel.OpenDate.String(),
+		classRoomModel.Shift,
+		classRoomModel.Level,
+		classRoomModel.Identification,
+		classRoomModel.SchoolYearID.String(),
+		classRoomModel.RoomID.UUID.String(),
+		classRoomModel.ScheduleID.String(),
+		classRoomModel.Localization.String,
+		classRoomModel.Type,
+	)
 
-	return &classRoom, nil
+	return classRoom, nil
 }
 
-func (c *ClassRoomRepository) FindAll(pagination common.Pagination) (*common.ClassRoomPaginationResult, error) {
+func (c *ClassRoomRepository) FindAll(pagination paginator.Pagination) (*paginator.PaginationResult, error) {
+
 	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelQuery()
 
 	query := `		
-		SELECT 	id,status,identification,vacancies,
+		SELECT 	id,status, active, identification,vacancies,
        			vacancies_occupied,shift,level,localization,
-       			open_date,school_year_id,room_id,schedule_id,type
+       			open_date,school_year_id,room_id,schedule_id,type,
+       			COUNT(*) OVER() as total
 			FROM class_room
     	WHERE localization like $1 AND deleted_at IS NULL 
 	`
@@ -194,63 +224,64 @@ func (c *ClassRoomRepository) FindAll(pagination common.Pagination) (*common.Cla
 	}
 	defer rows.Close()
 
-	var classRooms []entities.ClassRoom
+	var classRoomsModel []classRoomSearchModel
 
 	for rows.Next() {
-		var classRoom entities.ClassRoom
+		var classRoomModel classRoomSearchModel
 		err = rows.Scan(
-			&classRoom.Id,
-			&classRoom.Status,
-			&classRoom.Identification,
-			&classRoom.VacancyQuantity,
-			&classRoom.OccupiedVacancy,
-			&classRoom.Shift,
-			&classRoom.Level,
-			&classRoom.Localization,
-			&classRoom.OpenDate,
-			&classRoom.SchoolYearId,
-			&classRoom.RoomId,
-			&classRoom.ScheduleId,
-			&classRoom.Type)
+			&classRoomModel.ID,
+			&classRoomModel.Status,
+			&classRoomModel.Active,
+			&classRoomModel.Identification,
+			&classRoomModel.Vacancies,
+			&classRoomModel.VacanciesOccupied,
+			&classRoomModel.Shift,
+			&classRoomModel.Level,
+			&classRoomModel.Localization,
+			&classRoomModel.OpenDate,
+			&classRoomModel.SchoolYearID,
+			&classRoomModel.RoomID,
+			&classRoomModel.ScheduleID,
+			&classRoomModel.Type,
+			&classRoomModel.Total,
+		)
 		if err != nil {
 			return nil, err
 		}
 
-		classRooms = append(classRooms, classRoom)
+		classRoomsModel = append(classRoomsModel, classRoomModel)
 	}
 
-	var total int
-	queryCount := "SELECT COUNT(*) as total FROM class_room WHERE localization like $1"
-	columnFilter := pagination.GetColumnFilter()
-	if columnFilter != "" {
-		queryCount += columnFilter
-	}
+	var classRooms []classroom.ClassRoom
 
-	stmtCount, err := c.db.PrepareContext(ctx, queryCount)
-	if err != nil {
-		return nil, err
-	}
+	for _, classRoomModel := range classRoomsModel {
+		classRoom, err := classroom.Load(
+			classRoomModel.ID.String(),
+			classRoomModel.Active,
+			classRoomModel.Status,
+			int(classRoomModel.VacanciesOccupied),
+			int(classRoomModel.Vacancies),
+			classRoomModel.OpenDate.String(),
+			classRoomModel.Shift,
+			classRoomModel.Level,
+			classRoomModel.Identification,
+			classRoomModel.SchoolYearID.String(),
+			classRoomModel.RoomID.UUID.String(),
+			classRoomModel.ScheduleID.String(),
+			classRoomModel.Localization.String,
+			classRoomModel.Type,
+		)
 
-	defer stmtCount.Close()
-
-	rows, err = stmtCount.QueryContext(ctx,
-		"%"+pagination.Search+"%",
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		err = rows.Scan(&total)
 		if err != nil {
 			return nil, err
 		}
+
+		classRooms = append(classRooms, *classRoom)
 	}
 
-	classRoomPaginationResult := common.ClassRoomPaginationResult{
-		Total:      total,
-		ClassRooms: classRooms,
+	classRoomPaginationResult := paginator.PaginationResult{
+		Total: classRoomsModel[0].Total,
+		Data:  classRooms,
 	}
 
 	return &classRoomPaginationResult, nil

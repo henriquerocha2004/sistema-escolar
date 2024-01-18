@@ -4,23 +4,24 @@ import (
 	"github.com/gofiber/fiber/v2"
 	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room/roomService"
+	dto2 "github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
 	"log"
 )
 
 type RoomController struct {
-	roomActions secretary.RoomActionsInterface
+	roomActions roomService.RoomActionsInterface
 }
 
-func NewRoomController(roomActions secretary.RoomActionsInterface) *RoomController {
+func NewRoomController(roomActions roomService.RoomActionsInterface) *RoomController {
 	return &RoomController{
 		roomActions: roomActions,
 	}
 }
 
 func (r *RoomController) Create(ctx *fiber.Ctx) error {
-	var requestDto dto.RoomRequestDto
+	var requestDto room.RoomRequestDto
 	err := ctx.BodyParser(&requestDto)
 	if err != nil {
 		log.Println(err)
@@ -69,7 +70,7 @@ func (r *RoomController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	var inputDto dto.RoomRequestDto
+	var inputDto room.RoomRequestDto
 	err := ctx.BodyParser(&inputDto)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
@@ -193,7 +194,7 @@ func (r *RoomController) FindAll(ctx *fiber.Ctx) error {
 }
 
 func (r *RoomController) SyncSchedule(ctx *fiber.Ctx) error {
-	roomScheduleDto := dto.RoomScheduleDto{}
+	roomScheduleDto := dto2.RoomScheduleDto{}
 	err := ctx.BodyParser(&roomScheduleDto)
 	if err != nil {
 		log.Println(err)

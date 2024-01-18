@@ -2,19 +2,21 @@ package repositories
 
 import (
 	"database/sql"
-	"log"
-	"os"
-	"testing"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/value_objects"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/student"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
+	"log"
+	"os"
+	"testing"
 )
 
 func init() {
@@ -70,18 +72,17 @@ func (s *TestRegistrationSuit) TestShouldCreateRegistration() {
 	service := s.createService()
 	classroom := s.createClassRoom(schoolYear, room, schedule)
 
-	student := entities.Student{
-		Id:                 uuid.New(),
-		FirstName:          "Pedrinho",
-		LastName:           "Souza",
-		BirthDay:           &time.Time{},
-		RgDocument:         "123456789",
-		CPFDocument:        value_objects.CPF("17515874698"),
-		Email:              "teste@test.com",
-		HimSelfResponsible: true,
-	}
+	stdent, err := student.New(
+		"Pedrinho",
+		"Souza",
+		"2001-10-15",
+		"123456789",
+		"17515874698",
+		"teste@test.com",
+		true,
+	)
 
-	address := []dto.AddressDto{
+	address := []registration.AddressDto{
 		{
 			Street:   "Rua dos Bobos",
 			City:     "SSA",
@@ -91,133 +92,99 @@ func (s *TestRegistrationSuit) TestShouldCreateRegistration() {
 		},
 	}
 
-	student.AddAddress(address)
+	stdent.AddAddress(address)
 
-	phone := []dto.PhoneDto{
+	phone := []registration.PhoneDto{
 		{
 			Description: "Pessoal",
 			Phone:       "71589955554",
 		},
 	}
 
-	student.AddPhones(phone)
+	stdent.AddPhones(phone)
 
-	registration := entities.Registration{
-		Id:                   uuid.New(),
-		Class:                classroom,
-		Student:              student,
-		Shift:                value_objects.Shift("morning"),
-		Service:              service,
-		MonthlyFee:           2500.00,
-		InstallmentsQuantity: 2,
-		EnrollmentFee:        50.00,
-		EnrollmentDueDate:    &currentTime,
-		MonthDuration:        2,
-		EnrollmentDate:       &currentTime,
-		PaymentDay:           "12",
-	}
-	registration.GenerateCode()
-
-	err := s.repository.Create(registration)
+	reg, err := registration.New(
+		classroom,
+		"morning",
+		*stdent,
+		service,
+		2500.00,
+		2,
+		50.00,
+		"2023-12-21",
+		2,
+		"12",
+	)
 	s.Assert().NoError(err)
-
+	err = s.repository.Create(*reg)
+	s.Assert().NoError(err)
 }
 
 func (s *TestRegistrationSuit) createSchoolYear() uuid.UUID {
-
-	now := time.Now()
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2021",
-		StartedAt: &now,
-		EndAt:     &now,
-	}
+	schoolYear, _ := schoolyear.New("2021", "2021-01-01", "2021-12-30")
 
 	err := s.schoolYearRepository.Create(schoolYear)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return schoolYear.Id
+	return schoolYear.Id()
 }
 
 func (s *TestRegistrationSuit) createRoom() uuid.UUID {
-	room := entities.Room{
-		Id:          uuid.New(),
-		Code:        "SL-07",
-		Description: "Sala 7",
-		Capacity:    25,
-	}
+	r, _ := room.New("SL-07", "Sala 7", 25)
 
-	err := s.roomRepository.Create(room)
+	err := s.roomRepository.Create(*r)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return room.Id
+	return r.Id()
 }
 
 func (s *TestRegistrationSuit) createSchedule(schoolYearId uuid.UUID) uuid.UUID {
+	sch, _ := schedule.New("Any Description", "08:00", "09:00", schoolYearId.String())
 
-	schedule := entities.ScheduleClass{
-		Id:          uuid.New(),
-		Schedule:    "09:00-10:00",
-		Description: "Any Description",
-		SchoolYear:  schoolYearId,
-	}
-
-	err := s.scheduleRepository.Create(schedule)
+	err := s.scheduleRepository.Create(*sch)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return schedule.Id
+	return sch.Id()
 }
 
-func (s *TestRegistrationSuit) createService() entities.Service {
+func (s *TestRegistrationSuit) createService() service.Service {
+	srvce, _ := service.New("ANY DESCRIPTION", 5000.00)
 
-	service := entities.Service{
-		Id:          uuid.New(),
-		Description: "ANY DESCRIPTION",
-		Price:       5000.00,
-	}
-
-	err := s.serviceRepository.Create(service)
+	err := s.serviceRepository.Create(*srvce)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return service
+	return *srvce
 }
 
 func (s *TestRegistrationSuit) createClassRoom(
 	schoolYearId uuid.UUID,
 	roomId uuid.UUID,
 	scheduleId uuid.UUID,
-) entities.ClassRoom {
+) classroom.ClassRoom {
 
-	classRoom := entities.ClassRoom{
-		Id:              uuid.New(),
-		VacancyQuantity: 20,
-		Shift:           "Matutino",
-		OpenDate:        &currentTime,
-		OccupiedVacancy: 0,
-		Status:          "OPEN",
-		Level:           "1 ANO",
-		Identification:  "1AS",
-		SchoolYearId:    scheduleId,
-		RoomId: uuid.NullUUID{
-			UUID:  roomId,
-			Valid: false,
-		},
-		ScheduleId:   scheduleId,
-		Localization: "any location",
-	}
+	cr, _ := classroom.New(
+		20,
+		"morning",
+		"1 ANO",
+		"1AS",
+		schoolYearId.String(),
+		roomId.String(),
+		scheduleId.String(),
+		"any location",
+		"in_person")
 
-	err := s.classRoomRepository.Create(classRoom)
+	err := s.classRoomRepository.Create(*cr)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return classRoom
+	return *cr
 }

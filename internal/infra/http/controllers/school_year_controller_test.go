@@ -71,7 +71,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryParamsInCreateSchoolYear(t *testi
 
 func TestShouldCreateSchoolYearWithSuccess(t *testing.T) {
 	actionSchoolYear := new(mocks.SchoolYearActionsMock)
-	actionSchoolYear.On("Create", mock.AnythingOfType("dto.SchoolYearRequestDto")).Return(nil)
+	actionSchoolYear.On("Create", mock.AnythingOfType("paginator.SchoolYearRequestDto")).Return(nil)
 	schoolYearController := NewSchoolYearController(actionSchoolYear)
 
 	app := fiber.New()
@@ -148,7 +148,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryDataInUpdateSchoolYear(t *testing
 
 func TestShouldUpdateSchoolYearWithSuccess(t *testing.T) {
 	actionSchoolYear := new(mocks.SchoolYearActionsMock)
-	actionSchoolYear.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("dto.SchoolYearRequestDto")).Return(nil)
+	actionSchoolYear.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("paginator.SchoolYearRequestDto")).Return(nil)
 	schoolYearroomController := NewSchoolYearController(actionSchoolYear)
 	data := `{"year": "2020", "start_at":"2020-01-01", "end_at" : "2020-12-20"}`
 	app := fiber.New()

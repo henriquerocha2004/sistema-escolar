@@ -1,27 +1,27 @@
 package controllers
 
 import (
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service/serviceActions"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
 	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial"
 )
 
 type ServiceController struct {
-	serviceActions financial.ServiceActionsInterface
+	serviceActions serviceActions.ServiceActionsInterface
 }
 
-func NewServiceController(serviceActions financial.ServiceActionsInterface) *ServiceController {
+func NewServiceController(serviceActions serviceActions.ServiceActionsInterface) *ServiceController {
 	return &ServiceController{
 		serviceActions: serviceActions,
 	}
 }
 
 func (s *ServiceController) Create(ctx *fiber.Ctx) error {
-	requestDto := dto.ServiceRequestDto{}
+	requestDto := service.ServiceRequestDto{}
 	err := ctx.BodyParser(&requestDto)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
@@ -66,7 +66,7 @@ func (s *ServiceController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	var inputDto dto.ServiceRequestDto
+	var inputDto service.ServiceRequestDto
 	err := ctx.BodyParser(&inputDto)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(

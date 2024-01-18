@@ -56,7 +56,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryParamsInCreateService(t *testing.
 func TestShouldCreateServiceWithSuccess(t *testing.T) {
 
 	actionsService := new(mocks.ServiceActionsMock)
-	actionsService.On("Create", mock.AnythingOfType("dto.ServiceRequestDto")).Return(nil)
+	actionsService.On("Create", mock.AnythingOfType("paginator.ServiceRequestDto")).Return(nil)
 	serviceController := NewServiceController(actionsService)
 
 	app := fiber.New()
@@ -115,7 +115,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryDataInUpdateService(t *testing.T)
 
 func TestShouldUpdateServiceWithSuccess(t *testing.T) {
 	actionsService := new(mocks.ServiceActionsMock)
-	actionsService.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("dto.ServiceRequestDto")).Return(nil)
+	actionsService.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("paginator.ServiceRequestDto")).Return(nil)
 	serviceController := NewServiceController(actionsService)
 	data := `{"description": "2020"}`
 	app := fiber.New()

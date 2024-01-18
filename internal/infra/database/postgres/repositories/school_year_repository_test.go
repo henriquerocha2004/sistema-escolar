@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 	"log"
 	"os"
 	"testing"
@@ -10,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
@@ -131,7 +131,7 @@ func (s *TestSchoolYearSuit) TestShouldFindSchoolYearById() {
 	err := s.repository.Create(schoolYear)
 	s.Assert().NoError(err)
 
-	paginator := common.Pagination{}
+	paginator := paginator.Pagination{}
 	paginator.Limit = 3
 	paginator.SortField = "created_at"
 	paginator.Sort = "asc"

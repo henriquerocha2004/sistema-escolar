@@ -24,6 +24,7 @@ UPDATE class_room SET deleted_at = $1 WHERE id = $2;
 -- name: FindClassById :one
 SELECT id,
        status,
+       active,
        identification,
        vacancies,
        vacancies_occupied,
@@ -43,6 +44,7 @@ FROM class_room
 
 SELECT id,
        status,
+       active,
        identification,
        vacancies,
        vacancies_occupied,

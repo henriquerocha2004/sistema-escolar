@@ -85,7 +85,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryParamsInCreateSchedule(t *testing
 
 func TestShouldCreateScheduleWithSuccess(t *testing.T) {
 	actionScheduleClass := new(mocks.ScheduleActionsMock)
-	actionScheduleClass.On("Create", mock.AnythingOfType("dto.ScheduleRequestDto")).Return(nil)
+	actionScheduleClass.On("Create", mock.AnythingOfType("paginator.ScheduleRequestDto")).Return(nil)
 	scheduleClassController := NewScheduleController(actionScheduleClass)
 
 	app := fiber.New()
@@ -162,7 +162,7 @@ func TestShouldReturnErrorIfNotPassAllNecessaryDataInUpdateScheduleClass(t *test
 
 func TestShouldUpdateScheduleWithSuccess(t *testing.T) {
 	actionScheduleClass := new(mocks.ScheduleActionsMock)
-	actionScheduleClass.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("dto.ScheduleRequestDto")).Return(nil)
+	actionScheduleClass.On("Update", "1da90050-e182-4551-923d-2c60f72b545a", mock.AnythingOfType("paginator.ScheduleRequestDto")).Return(nil)
 	scheduleClassController := NewScheduleController(actionScheduleClass)
 	data := `{"description": "any description", "initial_time":"09:00", "final_time" : "10:00", "school_year" : "2002"}`
 	app := fiber.New()

@@ -3,11 +3,12 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/parent"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/student"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/models"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/value_objects"
 )
 
@@ -27,23 +28,23 @@ func (s *StudentRepository) SetTransaction(tx *sql.Tx) {
 	s.queues = s.queues.WithTx(tx)
 }
 
-func (s *StudentRepository) Create(student entities.Student) error {
+func (s *StudentRepository) Create(student student.Student) error {
 
 	studentModel := models.CreateStudentParams{
-		ID:        student.Id,
-		FirstName: student.FirstName,
-		LastName:  student.LastName,
-		Birthday:  *student.BirthDay,
+		ID:        student.Id(),
+		FirstName: student.FirstName(),
+		LastName:  student.LastName(),
+		Birthday:  *student.BirthDay(),
 		RgDocument: sql.NullString{
-			String: student.RgDocument,
+			String: student.Rg(),
 			Valid:  true,
 		},
-		CpfDocument: string(student.CPFDocument),
+		CpfDocument: string(student.Cpf()),
 		Email: sql.NullString{
-			String: student.Email,
+			String: student.Email(),
 			Valid:  true,
 		},
-		HimSelfResponsible: student.HimSelfResponsible,
+		HimSelfResponsible: student.HimSelfResponsible(),
 		CreatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
@@ -59,17 +60,17 @@ func (s *StudentRepository) Create(student entities.Student) error {
 		return err
 	}
 
-	err = s.syncAddress(student.Id, student.Addresses)
+	err = s.syncAddress(student.Id(), student.Addresses())
 	if err != nil {
 		return err
 	}
 
-	err = s.syncPhones(student.Id, student.Phones)
+	err = s.syncPhones(student.Id(), student.Phones())
 	if err != nil {
 		return err
 	}
 
-	err = s.syncParents(student.Id, student.Parents)
+	err = s.syncParents(student.Id(), student.Parents())
 	if err != nil {
 		return err
 	}
@@ -152,7 +153,7 @@ func (s *StudentRepository) syncPhones(ownerId uuid.UUID, phones []value_objects
 	return nil
 }
 
-func (s *StudentRepository) syncParents(studentId uuid.UUID, parents []entities.Parent) error {
+func (s *StudentRepository) syncParents(studentId uuid.UUID, parents []parent.Parent) error {
 
 	deleteParentsParam := models.DeleteParentsByStudentParams{
 		StudentID: studentId,
@@ -169,17 +170,17 @@ func (s *StudentRepository) syncParents(studentId uuid.UUID, parents []entities.
 
 	for _, parent := range parents {
 		parentModel := models.CreateParentParams{
-			ID:        parent.Id,
-			FirstName: parent.FirstName,
-			LastName:  parent.LastName,
-			Birthday:  *parent.BirthDay,
+			ID:        parent.Id(),
+			FirstName: parent.FirstName(),
+			LastName:  parent.LastName(),
+			Birthday:  *parent.BirthDay(),
 			RgDocument: sql.NullString{
-				String: parent.RgDocument,
+				String: parent.Rg(),
 				Valid:  true,
 			},
-			CpfDocument: string(parent.CpfDocument),
-			StudentID:   parent.StudentId,
-			Email:       parent.Email,
+			CpfDocument: string(parent.Cpf()),
+			StudentID:   parent.StudentId(),
+			Email:       parent.Email(),
 			CreatedAt: sql.NullTime{
 				Time:  time.Now(),
 				Valid: true,
@@ -195,12 +196,12 @@ func (s *StudentRepository) syncParents(studentId uuid.UUID, parents []entities.
 			return err
 		}
 
-		err = s.syncAddress(parent.Id, parent.Addresses)
+		err = s.syncAddress(parent.Id(), parent.Addresses())
 		if err != nil {
 			return err
 		}
 
-		err = s.syncPhones(parent.Id, parent.Phones)
+		err = s.syncPhones(parent.Id(), parent.Phones())
 		if err != nil {
 			return err
 		}
@@ -209,7 +210,7 @@ func (s *StudentRepository) syncParents(studentId uuid.UUID, parents []entities.
 	return nil
 }
 
-func (s *StudentRepository) FindByCpf(cpf value_objects.CPF) (*entities.Student, error) {
+func (s *StudentRepository) FindByCpf(cpf value_objects.CPF) (*student.Student, error) {
 
 	studentModel, err := s.queues.FindByCPFDocument(context.Background(), string(cpf))
 
@@ -217,16 +218,16 @@ func (s *StudentRepository) FindByCpf(cpf value_objects.CPF) (*entities.Student,
 		return nil, err
 	}
 
-	student := entities.Student{
-		Id:                 studentModel.ID,
-		FirstName:          studentModel.FirstName,
-		LastName:           studentModel.LastName,
-		BirthDay:           &studentModel.Birthday,
-		RgDocument:         studentModel.RgDocument.String,
-		CPFDocument:        value_objects.CPF(studentModel.CpfDocument),
-		Email:              studentModel.Email.String,
-		HimSelfResponsible: studentModel.HimSelfResponsible,
-	}
+	sdt, err := student.Load(
+		studentModel.ID.String(),
+		studentModel.FirstName,
+		studentModel.LastName,
+		studentModel.Birthday.Format("2006-01-02"),
+		studentModel.RgDocument.String,
+		studentModel.CpfDocument,
+		studentModel.Email.String,
+		studentModel.HimSelfResponsible,
+	)
 
-	return &student, nil
+	return sdt, err
 }

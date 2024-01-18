@@ -4,13 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
 	"log"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/models"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 )
 
 type RegistrationRepository struct {
@@ -29,9 +29,8 @@ func (r *RegistrationRepository) SetTransaction(tx *sql.Tx) {
 	r.queues = r.queues.WithTx(tx)
 }
 
-func (r *RegistrationRepository) Create(registration entities.Registration) error {
-
-	classRoomModel, err := r.queues.FindClassByIdLock(context.Background(), registration.Class.Id)
+func (r *RegistrationRepository) Create(registration registration.Registration) error {
+	classRoomModel, err := r.queues.FindClassByIdLock(context.Background(), registration.Class().Id())
 	if err != nil {
 		return err
 	}
@@ -40,43 +39,43 @@ func (r *RegistrationRepository) Create(registration entities.Registration) erro
 		return errors.New("no vacancies available for this class")
 	}
 
-	monthlyFee := strconv.FormatFloat(registration.MonthlyFee, 'f', -1, 64)
-	enrollmentFee := strconv.FormatFloat(registration.EnrollmentFee, 'f', -1, 64)
+	monthlyFee := strconv.FormatFloat(registration.MonthlyFee(), 'f', -1, 64)
+	enrollmentFee := strconv.FormatFloat(registration.EnrollmentFee(), 'f', -1, 64)
 
 	registrationModel := models.CreateRegistrationParams{
-		ID:   registration.Id,
-		Code: registration.Code,
+		ID:   registration.Id(),
+		Code: registration.Code(),
 		ClassRoomID: uuid.NullUUID{
 			UUID:  classRoomModel.ID,
 			Valid: true,
 		},
 		Shift: sql.NullString{
-			String: string(registration.Shift),
+			String: string(registration.Shift()),
 			Valid:  true,
 		},
-		StudentID:            registration.Student.Id,
-		ServiceID:            registration.Service.Id,
+		StudentID:            registration.Student().Id(),
+		ServiceID:            registration.Service().Id(),
 		MonthlyFee:           monthlyFee,
-		InstallmentsQuantity: int32(registration.InstallmentsQuantity),
+		InstallmentsQuantity: int32(registration.InstallmentsQuantity()),
 		EnrollmentFee: sql.NullString{
 			String: enrollmentFee,
 			Valid:  true,
 		},
 		DueDate: sql.NullTime{
-			Time:  *registration.EnrollmentDueDate,
+			Time:  registration.EnrollmentDueDate(),
 			Valid: true,
 		},
 		MonthDuration: sql.NullInt32{
-			Int32: int32(registration.MonthDuration),
+			Int32: int32(registration.MonthDuration()),
 			Valid: true,
 		},
-		Status: registration.Status,
+		Status: registration.Status(),
 		EnrollmentDate: sql.NullTime{
-			Time:  *registration.EnrollmentDate,
+			Time:  registration.EnrollmentDate(),
 			Valid: true,
 		},
 		SchoolYearID: uuid.NullUUID{
-			UUID:  registration.Class.SchoolYearId,
+			UUID:  registration.Class().Id(),
 			Valid: true,
 		},
 		CreatedAt: sql.NullTime{

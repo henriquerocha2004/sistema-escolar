@@ -74,6 +74,7 @@ func (q *Queries) DeleteClass(ctx context.Context, arg DeleteClassParams) error 
 const findClassById = `-- name: FindClassById :one
 SELECT id,
        status,
+       active,
        identification,
        vacancies,
        vacancies_occupied,
@@ -93,6 +94,7 @@ FROM class_room
 type FindClassByIdRow struct {
 	ID                uuid.UUID      `json:"id"`
 	Status            string         `json:"status"`
+	Active            bool           `json:"active"`
 	Identification    string         `json:"identification"`
 	Vacancies         int32          `json:"vacancies"`
 	VacanciesOccupied int32          `json:"vacancies_occupied"`
@@ -112,6 +114,7 @@ func (q *Queries) FindClassById(ctx context.Context, id uuid.UUID) (FindClassByI
 	err := row.Scan(
 		&i.ID,
 		&i.Status,
+		&i.Active,
 		&i.Identification,
 		&i.Vacancies,
 		&i.VacanciesOccupied,
@@ -131,6 +134,7 @@ const findClassByIdLock = `-- name: FindClassByIdLock :one
 
 SELECT id,
        status,
+       active,
        identification,
        vacancies,
        vacancies_occupied,
@@ -151,6 +155,7 @@ FROM class_room
 type FindClassByIdLockRow struct {
 	ID                uuid.UUID      `json:"id"`
 	Status            string         `json:"status"`
+	Active            bool           `json:"active"`
 	Identification    string         `json:"identification"`
 	Vacancies         int32          `json:"vacancies"`
 	VacanciesOccupied int32          `json:"vacancies_occupied"`
@@ -170,6 +175,7 @@ func (q *Queries) FindClassByIdLock(ctx context.Context, id uuid.UUID) (FindClas
 	err := row.Scan(
 		&i.ID,
 		&i.Status,
+		&i.Active,
 		&i.Identification,
 		&i.Vacancies,
 		&i.VacanciesOccupied,

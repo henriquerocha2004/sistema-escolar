@@ -8,18 +8,20 @@ package models
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const createSchedule = `-- name: CreateSchedule :exec
-INSERT INTO class_schedule (id, description, schedule, school_year_id, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6)
+INSERT INTO class_schedule (id, description, start_at, end_at, school_year_id, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7)
 `
 
 type CreateScheduleParams struct {
 	ID           uuid.UUID    `json:"id"`
 	Description  string       `json:"description"`
-	Schedule     string       `json:"schedule"`
+	StartAt      time.Time    `json:"start_at"`
+	EndAt        time.Time    `json:"end_at"`
 	SchoolYearID uuid.UUID    `json:"school_year_id"`
 	CreatedAt    sql.NullTime `json:"created_at"`
 	UpdatedAt    sql.NullTime `json:"updated_at"`
@@ -29,7 +31,8 @@ func (q *Queries) CreateSchedule(ctx context.Context, arg CreateScheduleParams) 
 	_, err := q.db.ExecContext(ctx, createSchedule,
 		arg.ID,
 		arg.Description,
-		arg.Schedule,
+		arg.StartAt,
+		arg.EndAt,
 		arg.SchoolYearID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -52,7 +55,7 @@ func (q *Queries) DeleteSchedule(ctx context.Context, arg DeleteScheduleParams) 
 }
 
 const findBySchoolYearId = `-- name: FindBySchoolYearId :many
-SELECT class_schedule.id as schedule_id, description, schedule, school_year.year FROM class_schedule
+SELECT class_schedule.id as schedule_id, description, class_schedule.start_at, class_schedule.end_at, school_year.year FROM class_schedule
      JOIN school_year ON school_year.id = class_schedule.school_year_id
      WHERE class_schedule.school_year_id = $1 AND class_schedule.deleted_at IS NULL
 `
@@ -60,7 +63,8 @@ SELECT class_schedule.id as schedule_id, description, schedule, school_year.year
 type FindBySchoolYearIdRow struct {
 	ScheduleID  uuid.UUID `json:"schedule_id"`
 	Description string    `json:"description"`
-	Schedule    string    `json:"schedule"`
+	StartAt     time.Time `json:"start_at"`
+	EndAt       time.Time `json:"end_at"`
 	Year        string    `json:"year"`
 }
 
@@ -76,7 +80,8 @@ func (q *Queries) FindBySchoolYearId(ctx context.Context, schoolYearID uuid.UUID
 		if err := rows.Scan(
 			&i.ScheduleID,
 			&i.Description,
-			&i.Schedule,
+			&i.StartAt,
+			&i.EndAt,
 			&i.Year,
 		); err != nil {
 			return nil, err
@@ -93,7 +98,7 @@ func (q *Queries) FindBySchoolYearId(ctx context.Context, schoolYearID uuid.UUID
 }
 
 const findOneSchedule = `-- name: FindOneSchedule :one
-SELECT class_schedule.id as schedule_id, description, schedule, school_year.id FROM class_schedule
+SELECT class_schedule.id as schedule_id, description, class_schedule.start_at, class_schedule.end_at, school_year.id FROM class_schedule
      JOIN school_year ON school_year.id = class_schedule.school_year_id
      WHERE class_schedule.id = $1 AND class_schedule.deleted_at IS NULL
 `
@@ -101,7 +106,8 @@ SELECT class_schedule.id as schedule_id, description, schedule, school_year.id F
 type FindOneScheduleRow struct {
 	ScheduleID  uuid.UUID `json:"schedule_id"`
 	Description string    `json:"description"`
-	Schedule    string    `json:"schedule"`
+	StartAt     time.Time `json:"start_at"`
+	EndAt       time.Time `json:"end_at"`
 	ID          uuid.UUID `json:"id"`
 }
 
@@ -111,19 +117,21 @@ func (q *Queries) FindOneSchedule(ctx context.Context, id uuid.UUID) (FindOneSch
 	err := row.Scan(
 		&i.ScheduleID,
 		&i.Description,
-		&i.Schedule,
+		&i.StartAt,
+		&i.EndAt,
 		&i.ID,
 	)
 	return i, err
 }
 
 const updateSchedule = `-- name: UpdateSchedule :exec
-UPDATE class_schedule SET description = $1, schedule = $2, school_year_id = $3, updated_at = $4 WHERE id = $5
+UPDATE class_schedule SET description = $1, start_at = $2, end_at = $3, school_year_id = $4, updated_at = $5 WHERE id = $6
 `
 
 type UpdateScheduleParams struct {
 	Description  string       `json:"description"`
-	Schedule     string       `json:"schedule"`
+	StartAt      time.Time    `json:"start_at"`
+	EndAt        time.Time    `json:"end_at"`
 	SchoolYearID uuid.UUID    `json:"school_year_id"`
 	UpdatedAt    sql.NullTime `json:"updated_at"`
 	ID           uuid.UUID    `json:"id"`
@@ -132,7 +140,8 @@ type UpdateScheduleParams struct {
 func (q *Queries) UpdateSchedule(ctx context.Context, arg UpdateScheduleParams) error {
 	_, err := q.db.ExecContext(ctx, updateSchedule,
 		arg.Description,
-		arg.Schedule,
+		arg.StartAt,
+		arg.EndAt,
 		arg.SchoolYearID,
 		arg.UpdatedAt,
 		arg.ID,

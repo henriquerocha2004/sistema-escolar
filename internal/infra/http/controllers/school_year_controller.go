@@ -5,23 +5,23 @@ import (
 	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
 	"github.com/henriquerocha2004/sistema-escolar/internal/presenters"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear/schoolYearService"
 	"log"
 )
 
 type SchoolYearController struct {
-	actions secretary.SchoolYearActionsInterface
+	actions schoolYearService.SchoolYearActionsInterface
 }
 
-func NewSchoolYearController(actions secretary.SchoolYearActionsInterface) *SchoolYearController {
+func NewSchoolYearController(actions schoolYearService.SchoolYearActionsInterface) *SchoolYearController {
 	return &SchoolYearController{
 		actions: actions,
 	}
 }
 
 func (s *SchoolYearController) Create(ctx *fiber.Ctx) error {
-	requestDto := dto.SchoolYearRequestDto{}
+	requestDto := schoolyear.SchoolYearRequestDto{}
 	err := ctx.BodyParser(&requestDto)
 	if err != nil {
 		log.Println(err)
@@ -68,7 +68,7 @@ func (s *SchoolYearController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	var inputDto dto.SchoolYearRequestDto
+	var inputDto schoolyear.SchoolYearRequestDto
 	err := ctx.BodyParser(&inputDto)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(

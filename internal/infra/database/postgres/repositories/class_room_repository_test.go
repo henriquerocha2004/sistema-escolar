@@ -2,6 +2,11 @@ package repositories
 
 import (
 	"database/sql"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 	"log"
 	"os"
 	"testing"
@@ -10,9 +15,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 )
@@ -64,7 +66,7 @@ func (s *TestClassRoomSuit) TestShouldCreateClassRoom() {
 	classRoom := s.createRoom()
 	err := s.repository.Create(classRoom)
 	s.Assert().NoError(err)
-	classRoomDb, err := s.repository.FindById(classRoom.Id.String())
+	classRoomDb, err := s.repository.FindById(classRoom.Id().String())
 	s.Assert().NotNil(classRoomDb)
 	s.Assert().NoError(err)
 	s.Assert().Equal(classRoom.Localization, classRoomDb.Localization)
@@ -75,11 +77,11 @@ func (s *TestClassRoomSuit) TestShouldUpdateClassRoom() {
 	classRoom := s.createRoom()
 	err := s.repository.Create(classRoom)
 	s.Assert().NoError(err)
-	classRoom.Shift = "Vespertino"
-	classRoom.Localization = "Outher Localization"
+	_ = classRoom.ChangeShift("afternoon")
+	_ = classRoom.ChangeLocalization("Other Localization")
 	err = s.repository.Update(classRoom)
 	s.Assert().NoError(err)
-	classRoomDb, err := s.repository.FindById(classRoom.Id.String())
+	classRoomDb, err := s.repository.FindById(classRoom.Id().String())
 	s.Assert().NoError(err)
 	s.Assert().Equal(classRoom.Shift, classRoomDb.Shift)
 	s.Assert().Equal(classRoom.Localization, classRoomDb.Localization)
@@ -89,9 +91,9 @@ func (s *TestClassRoomSuit) TestShouldDeleteClassRoom() {
 	classRoom := s.createRoom()
 	err := s.repository.Create(classRoom)
 	s.Assert().NoError(err)
-	err = s.repository.Delete(classRoom.Id.String())
+	err = s.repository.Delete(classRoom.Id().String())
 	s.Assert().NoError(err)
-	classRoomDb, err := s.repository.FindById(classRoom.Id.String())
+	classRoomDb, err := s.repository.FindById(classRoom.Id().String())
 	s.Assert().Nil(classRoomDb)
 	s.Assert().Error(err)
 }
@@ -100,7 +102,7 @@ func (s *TestClassRoomSuit) TestShouldFindClassRoomById() {
 	classRoom := s.createRoom()
 	err := s.repository.Create(classRoom)
 	s.Assert().NoError(err)
-	classRoomDb, err := s.repository.FindById(classRoom.Id.String())
+	classRoomDb, err := s.repository.FindById(classRoom.Id().String())
 	s.Assert().NotNil(classRoomDb)
 	s.Assert().NoError(err)
 }
@@ -110,85 +112,63 @@ func (s *TestClassRoomSuit) TestShouldFindByShift() {
 	err := s.repository.Create(classRoom)
 	s.Assert().NoError(err)
 
-	pagination := common.Pagination{}
-	pagination.ColumnSearch = append(pagination.ColumnSearch, dto.ColumnSearch{
+	pagination := paginator.Pagination{}
+	pagination.ColumnSearch = append(pagination.ColumnSearch, paginator.ColumnSearch{
 		Column: "shift",
-		Value:  "Matutino",
+		Value:  "morning",
 	})
 	pagination.Limit = 1
 	pagination.SetPage(1)
 
 	classRoomPaginationResult, err := s.repository.FindAll(pagination)
-
+	result := classRoomPaginationResult.Data.([]classroom.ClassRoom)
 	s.Assert().NoError(err)
-	s.Assert().Equal(classRoom.Shift, classRoomPaginationResult.ClassRooms[0].Shift)
+	s.Assert().Equal(classRoom.Shift, result[0].Shift())
 }
 
-func (s *TestClassRoomSuit) getSchoolYear() entities.SchoolYear {
-
-	startAt, _ := time.Parse("2006-02-02", "2001-01-01")
-	endAt, _ := time.Parse("2006-02-02", "2001-12-30")
-
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2001",
-		StartedAt: &startAt,
-		EndAt:     &endAt,
-	}
-
+func (s *TestClassRoomSuit) getSchoolYear() schoolyear.SchoolYear {
+	schoolYear, err := schoolyear.New("2001", "2001-01-01", "2001-12-30")
+	s.Assert().NoError(err)
 	_ = s.schoolYearRepository.Create(schoolYear)
 
-	return schoolYear
+	return *schoolYear
 }
 
-func (s *TestClassRoomSuit) getRoom() entities.Room {
-	room := entities.Room{
-		Id:          uuid.New(),
-		Code:        "SL-07",
-		Description: "Sala 7",
-		Capacity:    25,
-	}
+func (s *TestClassRoomSuit) getRoom() room.Room {
+	r, err := room.New("SL-07", "Sala 7", 25)
+	s.Assert().NoError(err)
+	_ = s.roomRepository.Create(*r)
 
-	_ = s.roomRepository.Create(room)
-
-	return room
+	return *r
 }
 
-func (s *TestClassRoomSuit) getSchedule(schoolYearId uuid.UUID) entities.ScheduleClass {
+func (s *TestClassRoomSuit) getSchedule(schoolYearId uuid.UUID) schedule.ScheduleClass {
+	sh, err := schedule.New("Any Description", "08:00", "09:00", schoolYearId.String())
+	s.Assert().NoError(err)
+	_ = s.scheduleRepository.Create(*sh)
 
-	schedule := entities.ScheduleClass{
-		Id:          uuid.New(),
-		Description: "Any Description",
-		Schedule:    "8:00-9:00",
-		SchoolYear:  schoolYearId,
-	}
-
-	_ = s.scheduleRepository.Create(schedule)
-
-	return schedule
+	return *sh
 }
 
-func (s *TestClassRoomSuit) createRoom() entities.ClassRoom {
+func (s *TestClassRoomSuit) createRoom() classroom.ClassRoom {
 
 	schoolYear := s.getSchoolYear()
-	room := s.getRoom()
-	schedule := s.getSchedule(schoolYear.Id)
+	r := s.getRoom()
+	sh := s.getSchedule(schoolYear.Id())
 
-	return entities.ClassRoom{
-		Id:              uuid.New(),
-		VacancyQuantity: 20,
-		Shift:           "Matutino",
-		OpenDate:        &currentTime,
-		OccupiedVacancy: 0,
-		Status:          "OPEN",
-		Level:           "1 ANO",
-		Identification:  "1AS",
-		SchoolYearId:    schoolYear.Id,
-		RoomId: uuid.NullUUID{
-			UUID:  room.Id,
-			Valid: false,
-		},
-		ScheduleId:   schedule.Id,
-		Localization: "any location",
-	}
+	classRoom, err := classroom.New(
+		20,
+		"morning",
+		"1 Ano",
+		"1AS",
+		schoolYear.Id().String(),
+		r.Id().String(),
+		sh.Id().String(),
+		"any location",
+		"in_person",
+	)
+
+	s.Assert().NoError(err)
+
+	return *classRoom
 }

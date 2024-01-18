@@ -4,22 +4,21 @@ import (
 	"github.com/gofiber/fiber/v2"
 	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
 )
 
 type ScheduleController struct {
-	scheduleActions secretary.ScheduleActionsInterface
+	scheduleActions schedule.ScheduleActionsInterface
 }
 
-func NewScheduleController(scheduleActions secretary.ScheduleActionsInterface) *ScheduleController {
+func NewScheduleController(scheduleActions schedule.ScheduleActionsInterface) *ScheduleController {
 	return &ScheduleController{
 		scheduleActions: scheduleActions,
 	}
 }
 
 func (s *ScheduleController) Create(ctx *fiber.Ctx) error {
-	inputRequest := dto.ScheduleRequestDto{}
+	inputRequest := schedule.ScheduleRequestDto{}
 	err := ctx.BodyParser(&inputRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
@@ -64,7 +63,7 @@ func (s *ScheduleController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	inputRequest := dto.ScheduleRequestDto{}
+	inputRequest := schedule.ScheduleRequestDto{}
 	err := ctx.BodyParser(&inputRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(

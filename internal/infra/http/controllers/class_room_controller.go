@@ -4,22 +4,21 @@ import (
 	"github.com/gofiber/fiber/v2"
 	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom"
 )
 
 type ClassRoomController struct {
-	classRoomActions secretary.ClassRoomActionsInterface
+	classRoomActions classroom.ClassRoomActionsInterface
 }
 
-func NewClassRoomController(ca secretary.ClassRoomActionsInterface) *ClassRoomController {
+func NewClassRoomController(ca classroom.ClassRoomActionsInterface) *ClassRoomController {
 	return &ClassRoomController{
 		classRoomActions: ca,
 	}
 }
 
 func (c *ClassRoomController) Create(ctx *fiber.Ctx) error {
-	var dtoRequest dto.ClassRoomRequestDto
+	var dtoRequest classroom.ClassRoomRequestDto
 
 	err := ctx.BodyParser(&dtoRequest)
 	if err != nil {
@@ -65,7 +64,7 @@ func (c *ClassRoomController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	var dtoRequest dto.ClassRoomRequestDto
+	var dtoRequest classroom.ClassRoomRequestDto
 	err := ctx.BodyParser(&dtoRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(

@@ -1,25 +1,25 @@
 package controllers
 
 import (
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration/registrationService"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary"
 )
 
 type RegisterController struct {
-	registerActions secretary.RegistrationActionsInterface
+	registerActions registrationService.RegistrationActionsInterface
 }
 
-func NewRegisterController(regActions secretary.RegistrationActionsInterface) *RegisterController {
+func NewRegisterController(regActions registrationService.RegistrationActionsInterface) *RegisterController {
 	return &RegisterController{
 		registerActions: regActions,
 	}
 }
 
 func (r *RegisterController) Create(ctx *fiber.Ctx) error {
-	var registerDto dto.RegistrationDto
+	var registerDto registration.RegistrationDto
 
 	err := ctx.BodyParser(&registerDto)
 	if err != nil {

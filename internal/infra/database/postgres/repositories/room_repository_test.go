@@ -3,19 +3,17 @@ package repositories
 import (
 	"database/sql"
 	"fmt"
+	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
+	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/suite"
 	"log"
 	"os"
 	"testing"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
-	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
-	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/suite"
 )
 
 func init() {
@@ -64,70 +62,56 @@ func TestManagerRoom(t *testing.T) {
 }
 
 func (s *TestRoomSuit) TestShouldCreateRoom() {
-	room := entities.Room{
-		Id:          uuid.New(),
-		Code:        "SL-07",
-		Description: "Sala 7",
-		Capacity:    25,
-	}
+	room, err := room.New("SL-07", "Sala 7", 25)
+	s.Assert().NoError(err)
 
-	err := s.repository.Create(room)
+	err = s.repository.Create(*room)
 	s.Assert().NoError(err)
 }
 
 func (s *TestRoomSuit) TestShouldUpdateRoom() {
-	room := entities.Room{
-		Id:          uuid.New(),
-		Code:        "SL-07",
-		Description: "Sala 7",
-		Capacity:    25,
-	}
-
-	err := s.repository.Create(room)
+	room, err := room.New("SL-07", "Sala 7", 25)
 	s.Assert().NoError(err)
 
-	room.Capacity = 15
-	err = s.repository.Update(room)
+	err = s.repository.Create(*room)
 	s.Assert().NoError(err)
 
-	roomDb, err := s.repository.FindById(room.Id.String())
+	err = room.ChangeCapacity(15)
+	s.Assert().NoError(err)
+
+	err = s.repository.Update(*room)
+	s.Assert().NoError(err)
+
+	roomDb, err := s.repository.FindById(room.Id().String())
 	s.Assert().NoError(err)
 	s.Assert().NotNil(roomDb)
 	s.Assert().Equal(room.Id, roomDb.Id)
 }
 
 func (s *TestRoomSuit) TestShouldDeleteRoom() {
-	room := entities.Room{
-		Id:          uuid.New(),
-		Code:        "SL-07",
-		Description: "Sala 7",
-		Capacity:    25,
-	}
-
-	err := s.repository.Create(room)
+	room, err := room.New("SL-07", "Sala 7", 25)
 	s.Assert().NoError(err)
 
-	err = s.repository.Delete(room.Id.String())
+	err = s.repository.Create(*room)
 	s.Assert().NoError(err)
 
-	roomDb, err := s.repository.FindById(room.Id.String())
+	err = s.repository.Delete(room.Id().String())
+	s.Assert().NoError(err)
+
+	roomDb, err := s.repository.FindById(room.Id().String())
 	s.Assert().Error(err)
 	s.Assert().Equal("sql: no rows in result set", err.Error())
 	s.Assert().Nil(roomDb)
 }
 
 func (s *TestRoomSuit) TestShouldFindRoomById() {
-	room := entities.Room{
-		Id:          uuid.New(),
-		Code:        "SL-07",
-		Description: "Sala 7",
-		Capacity:    25,
-	}
-
-	err := s.repository.Create(room)
+	r, err := room.New("SL-07", "Sala 7", 25)
 	s.Assert().NoError(err)
 
-	paginator := common.Pagination{}
+	err = s.repository.Create(*r)
+	s.Assert().NoError(err)
+
+	paginator := paginator.Pagination{}
 	paginator.Limit = 3
 	paginator.SortField = "created_at"
 	paginator.Sort = "asc"
@@ -135,60 +119,42 @@ func (s *TestRoomSuit) TestShouldFindRoomById() {
 
 	rooms, err := s.repository.FindAll(paginator)
 	s.Assert().NoError(err)
-	s.Assert().Equal(1, len(rooms.Rooms))
+	s.Assert().Equal(1, len(rooms.Data.([]room.Room)))
 }
 
 func (s *TestRoomSuit) TestShouldFindByCode() {
-	room := entities.Room{
-		Id:          uuid.New(),
-		Code:        "SL-07",
-		Description: "Sala 7",
-		Capacity:    25,
-	}
-
-	err := s.repository.Create(room)
+	r, err := room.New("SL-07", "Sala 7", 25)
 	s.Assert().NoError(err)
 
-	roomDB, err := s.repository.FindByCode(room.Code)
+	err = s.repository.Create(*r)
 	s.Assert().NoError(err)
-	s.Assert().Equal(room.Code, roomDB.Code)
+
+	roomDB, err := s.repository.FindByCode(r.Code())
+	s.Assert().NoError(err)
+	s.Assert().Equal(r.Code(), roomDB.Code)
 }
 
 func (s *TestRoomSuit) TestShouldSyncSchedule() {
-	room := entities.Room{
-		Id:          uuid.New(),
-		Code:        "SL-07",
-		Description: "Sala 7",
-		Capacity:    25,
-	}
-
-	err := s.repository.Create(room)
+	r, err := room.New("SL-07", "Sala 7", 25)
 	s.Assert().NoError(err)
 
-	now := time.Now()
+	err = s.repository.Create(*r)
+	s.Assert().NoError(err)
 
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2021",
-		StartedAt: &now,
-		EndAt:     &now,
-	}
+	schoolYear, err := schoolyear.New("2021", "2023-01-01", "2023-12-21")
+	s.Assert().NoError(err)
 
 	_ = s.schoolYearRepository.Create(schoolYear)
 
-	schedule := entities.ScheduleClass{
-		Id:          uuid.New(),
-		Schedule:    "09:00-10:00",
-		Description: "Any Description",
-		SchoolYear:  schoolYear.Id,
-	}
+	sch, err := schedule.New("Any description", "08:00", "09:00", schoolYear.Id().String())
+	s.Assert().NoError(err)
 
-	_ = s.scheduleRepository.Create(schedule)
+	_ = s.scheduleRepository.Create(*sch)
 
-	roomScheduleDto := dto.RoomScheduleDto{
-		SchoolYear:  schoolYear.Id.String(),
-		RoomId:      room.Id.String(),
-		ScheduleIds: []string{schedule.Id.String()},
+	roomScheduleDto := schedule.RoomScheduleDto{
+		SchoolYear:  schoolYear.Id().String(),
+		RoomId:      r.Id().String(),
+		ScheduleIds: []string{sch.Id().String()},
 	}
 
 	err = s.repository.SyncSchedule(roomScheduleDto)

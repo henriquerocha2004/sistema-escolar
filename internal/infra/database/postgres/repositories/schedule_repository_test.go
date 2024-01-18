@@ -2,17 +2,16 @@ package repositories
 
 import (
 	"database/sql"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
+
+	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
+	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 	"log"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
-	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
-	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/common"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/dto"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 )
@@ -55,59 +54,43 @@ func TestManagerScheduleRoom(t *testing.T) {
 }
 
 func (s *TestScheduleRoomSuit) TestShouldCreateSchedule() {
-	schoolYear := s.getSchoolYear()
+	sY := s.getSchoolYear()
+	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
 
-	schedule := entities.ScheduleClass{
-		Id:          uuid.New(),
-		Description: "Any Description",
-		Schedule:    "8:00-9:00",
-		SchoolYear:  schoolYear.Id,
-	}
-
-	err := s.repository.Create(schedule)
+	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
 }
 
 func (s *TestScheduleRoomSuit) TestShouldUpdateSchedule() {
-	schoolYear := s.getSchoolYear()
+	sY := s.getSchoolYear()
+	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
 
-	schedule := entities.ScheduleClass{
-		Id:          uuid.New(),
-		Description: "Any Description",
-		Schedule:    "8:00-9:00",
-		SchoolYear:  schoolYear.Id,
-	}
-
-	err := s.repository.Create(schedule)
+	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
 
-	schedule.Schedule = "10:00-11:00"
-	err = s.repository.Update(schedule)
+	err = sch.ChangePeriod("10:00", "11:00")
+	s.Assert().NoError(err)
+	err = s.repository.Update(*sch)
 	s.Assert().NoError(err)
 
-	scheduleDb, err := s.repository.FindById(schedule.Id.String())
+	scheduleDb, err := s.repository.FindById(sch.Id().String())
 	s.Assert().NoError(err)
-	s.Assert().Equal(schedule.Schedule, scheduleDb.Schedule)
+	s.Assert().Equal(sch.StartAt(), scheduleDb.StartAt())
+	s.Assert().Equal(sch.EndAt(), scheduleDb.EndAt())
 }
 
 func (s *TestScheduleRoomSuit) TestShouldDeleteScheduleRoom() {
 
-	schoolYear := s.getSchoolYear()
+	sY := s.getSchoolYear()
+	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
 
-	schedule := entities.ScheduleClass{
-		Id:          uuid.New(),
-		Description: "Any Description",
-		Schedule:    "8:00-9:00",
-		SchoolYear:  schoolYear.Id,
-	}
-
-	err := s.repository.Create(schedule)
+	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
 
-	err = s.repository.Delete(schedule.Id.String())
+	err = s.repository.Delete(sch.Id().String())
 	s.Assert().NoError(err)
 
-	scheduleDb, err := s.repository.FindById(schedule.Id.String())
+	scheduleDb, err := s.repository.FindById(sch.Id().String())
 	s.Assert().Error(err)
 	s.Assert().Equal("sql: no rows in result set", err.Error())
 	s.Assert().Nil(scheduleDb)
@@ -115,20 +98,14 @@ func (s *TestScheduleRoomSuit) TestShouldDeleteScheduleRoom() {
 
 func (s *TestScheduleRoomSuit) TestShouldFindByDescription() {
 
-	schoolYear := s.getSchoolYear()
+	sY := s.getSchoolYear()
+	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
 
-	schedule := entities.ScheduleClass{
-		Id:          uuid.New(),
-		Description: "Any Description",
-		Schedule:    "8:00-9:00",
-		SchoolYear:  schoolYear.Id,
-	}
-
-	err := s.repository.Create(schedule)
+	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
 
-	pagination := common.Pagination{}
-	pagination.ColumnSearch = append(pagination.ColumnSearch, dto.ColumnSearch{
+	pagination := paginator.Pagination{}
+	pagination.ColumnSearch = append(pagination.ColumnSearch, paginator.ColumnSearch{
 		Column: "description",
 		Value:  "Any Description",
 	})
@@ -137,40 +114,27 @@ func (s *TestScheduleRoomSuit) TestShouldFindByDescription() {
 
 	schedulePaginationResult, err := s.repository.FindAll(pagination)
 	s.Assert().NoError(err)
-	s.Assert().Equal(schedule.Description, schedulePaginationResult.Schedules[0].Description)
+	data := schedulePaginationResult.Data.([]schedule.ScheduleClass)
+	s.Assert().Equal(sch.Description(), data[0].Description)
 }
 
 func (s *TestScheduleRoomSuit) TestShouldFindScheduleById() {
-	schoolYear := s.getSchoolYear()
+	sY := s.getSchoolYear()
 
-	schedule := entities.ScheduleClass{
-		Id:          uuid.New(),
-		Description: "Any Description",
-		Schedule:    "8:00-9:00",
-		SchoolYear:  schoolYear.Id,
-	}
+	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
 
-	err := s.repository.Create(schedule)
+	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
 
-	scheduleDb, err := s.repository.FindById(schedule.Id.String())
+	scheduleDb, err := s.repository.FindById(sch.Id().String())
 	s.Assert().NoError(err)
-	s.Assert().Equal(schedule.Description, scheduleDb.Description)
+	s.Assert().Equal(sch.Description(), scheduleDb.Description())
 }
 
-func (s *TestScheduleRoomSuit) getSchoolYear() entities.SchoolYear {
+func (s *TestScheduleRoomSuit) getSchoolYear() schoolyear.SchoolYear {
+	sY, err := schoolyear.New("2001", "2001-01-01", "2001-12-30")
+	s.Assert().NoError(err)
+	_ = s.schoolYearRepository.Create(sY)
 
-	startAt, _ := time.Parse("2006-02-02", "2001-01-01")
-	endAt, _ := time.Parse("2006-02-02", "2001-12-30")
-
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2001",
-		StartedAt: &startAt,
-		EndAt:     &endAt,
-	}
-
-	_ = s.schoolYearRepository.Create(schoolYear)
-
-	return schoolYear
+	return *sY
 }
