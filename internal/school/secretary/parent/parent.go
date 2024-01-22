@@ -3,7 +3,8 @@ package parent
 import (
 	"encoding/json"
 	"errors"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/address"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/phone"
 	"log"
 	"time"
 
@@ -185,7 +186,7 @@ func (p *Parent) Addresses() []value_objects.Address {
 	return p.addresses
 }
 
-func (p *Parent) AddAddress(addressDto []registration.AddressDto) {
+func (p *Parent) AddAddress(addressDto []address.RequestDto) {
 
 	var addresses []value_objects.Address
 
@@ -212,7 +213,7 @@ func (p *Parent) Phones() []value_objects.Phone {
 	return p.phones
 }
 
-func (p *Parent) AddPhones(phonesDto []registration.PhoneDto) {
+func (p *Parent) AddPhones(phonesDto []phone.RequestDto) {
 
 	var phones []value_objects.Phone
 

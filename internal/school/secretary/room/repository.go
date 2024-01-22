@@ -9,6 +9,6 @@ type Repository interface {
 	Delete(id string) error
 	Update(room Room) error
 	FindByCode(code string) (*Room, error)
-	FindAll(pagination paginator.Pagination) (*paginator.RoomPaginationResult, error)
+	FindAll(pagination paginator.Pagination) (*paginator.PaginationResult, error)
 	FindById(id string) (*Room, error)
 }

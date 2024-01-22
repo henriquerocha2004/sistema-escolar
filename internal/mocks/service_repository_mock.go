@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities/service"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 	"github.com/stretchr/testify/mock"
 )
@@ -30,7 +30,7 @@ func (s *ServiceRepository) FindById(id string) (*service.Service, error) {
 	return args.Get(0).(*service.Service), args.Error(1)
 }
 
-func (s *ServiceRepository) FindAll(paginator paginator.Pagination) (*paginator.ServicePaginationResult, error) {
-	args := s.Called(paginator)
-	return args.Get(0).(*paginator.ServicePaginationResult), args.Error(1)
+func (s *ServiceRepository) FindAll(pagination paginator.Pagination) (*paginator.PaginationResult, error) {
+	args := s.Called(pagination)
+	return args.Get(0).(*paginator.PaginationResult), args.Error(1)
 }

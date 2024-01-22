@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
+	"log"
 	"strconv"
 )
 
@@ -15,6 +16,7 @@ func ParseRequestPaginator(ctx *fiber.Ctx) (*paginator.PaginatorRequest, error) 
 	if columnSearch != "" {
 		err := json.Unmarshal([]byte(columnSearch), &columnSearchDto)
 		if err != nil {
+			log.Println(err)
 			return nil, errors.New("failed to parse column_search")
 		}
 	}

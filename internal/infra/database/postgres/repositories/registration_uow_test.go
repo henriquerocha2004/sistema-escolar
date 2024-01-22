@@ -1,42 +1,30 @@
 package repositories
 
 import (
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities/student"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
-	"log"
-	"os"
-	"testing"
-	"time"
-
-	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/value_objects"
-	"github.com/joho/godotenv"
+	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/student"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/address"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/phone"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
-
-func init() {
-	rootProject, _ := os.Getwd()
-	err := godotenv.Load(rootProject + "/../../../../.env.test")
-	if err != nil {
-		log.Fatal("Error in read .env file")
-	}
-}
 
 func TestUowRegistration(t *testing.T) {
 
-	student := student.Student{
-		Id:                 uuid.New(),
-		FirstName:          "Pedrinho",
-		LastName:           "Souza",
-		BirthDay:           &time.Time{},
-		RgDocument:         "123456789",
-		CPFDocument:        value_objects.CPF("17515874698"),
-		Email:              "teste@test.com",
-		HimSelfResponsible: true,
-	}
+	std, err := student.New(
+		"Pedrinho",
+		"Souza",
+		"2023-12-12",
+		"123456789",
+		"84731086043",
+		"teste@test.com",
+		true,
+	)
 
-	address := []registration.AddressDto{
+	assert.NoError(t, err)
+
+	add := []address.RequestDto{
 		{
 			Street:   "Rua dos Bobos",
 			City:     "SSA",
@@ -46,27 +34,28 @@ func TestUowRegistration(t *testing.T) {
 		},
 	}
 
-	student.AddAddress(address)
+	std.AddAddress(add)
 
-	phone := []registration.PhoneDto{
+	p := []phone.RequestDto{
 		{
 			Description: "Pessoal",
 			Phone:       "71589955554",
 		},
 	}
 
-	student.AddPhones(phone)
+	std.AddPhones(p)
+	testtools.StartTestEnv()
 	db := postgres.Connect()
 	studentRepository := *NewStudentRepository(db)
 	registrationUow := NewRegistrationUow(db, studentRepository, *NewRegistrationRepository(db))
 
-	registrationUow.BeginTransaction()
-	err := registrationUow.CreateStudent(student)
+	_ = registrationUow.BeginTransaction()
+	err = registrationUow.CreateStudent(*std)
 	assert.NoError(t, err)
 
 	_ = registrationUow.Rollback()
 
-	studentDb, err := studentRepository.FindByCpf(student.CPFDocument)
+	studentDb, err := studentRepository.FindByCpf(std.Cpf())
 	assert.Error(t, err)
 	assert.Nil(t, studentDb)
 }

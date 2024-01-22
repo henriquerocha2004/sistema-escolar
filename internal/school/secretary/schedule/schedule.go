@@ -3,7 +3,6 @@ package schedule
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"regexp"
 	"time"
@@ -127,14 +126,11 @@ func (s *ScheduleClass) ChangePeriod(initialTime string, finalTime string) error
 		return err
 	}
 
-	start := fmt.Sprintf("%s:00", initialTime)
-	end := fmt.Sprintf("%s:00", finalTime)
-
-	t1, err := time.Parse("15:04:05", start)
+	t1, err := time.Parse("15:04:05", initialTime)
 	if err != nil {
 		return err
 	}
-	t2, err := time.Parse("15:04:05", end)
+	t2, err := time.Parse("15:04:05", finalTime)
 	if err != nil {
 		return err
 	}
@@ -144,14 +140,14 @@ func (s *ScheduleClass) ChangePeriod(initialTime string, finalTime string) error
 		return errors.New("initial time can not be greater than final time")
 	}
 
-	s.startAt = start
-	s.endAt = end
+	s.startAt = t1.Format("15:04:05")
+	s.endAt = t2.Format("15:04:05")
 
 	return nil
 }
 
 func (s *ScheduleClass) validateTime(hour string) error {
-	regex, _ := regexp.Compile("^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
+	regex, _ := regexp.Compile("^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$")
 	if !regex.MatchString(hour) {
 		return errors.New("invalid time schedule provided")
 	}

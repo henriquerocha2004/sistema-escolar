@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities/student"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/student"
 	"github.com/stretchr/testify/mock"
 )
 

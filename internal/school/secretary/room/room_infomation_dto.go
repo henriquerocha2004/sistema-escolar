@@ -5,6 +5,6 @@ import (
 )
 
 type RoomInformationDto struct {
-	Room        RoomRequestDto                    `json:"room"`
-	SchoolYears []schoolyear.SchoolYearRequestDto `json:"school_years"`
+	Room        Request                 `json:"room"`
+	SchoolYears []schoolyear.SchoolYear `json:"school_years"`
 }

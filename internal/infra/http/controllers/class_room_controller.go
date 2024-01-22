@@ -5,20 +5,21 @@ import (
 	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom/classRoomService"
 )
 
 type ClassRoomController struct {
-	classRoomActions classroom.ClassRoomActionsInterface
+	classRoomActions classRoomService.ServiceClassRoomInterface
 }
 
-func NewClassRoomController(ca classroom.ClassRoomActionsInterface) *ClassRoomController {
+func NewClassRoomController(ca classRoomService.ServiceClassRoomInterface) *ClassRoomController {
 	return &ClassRoomController{
 		classRoomActions: ca,
 	}
 }
 
 func (c *ClassRoomController) Create(ctx *fiber.Ctx) error {
-	var dtoRequest classroom.ClassRoomRequestDto
+	var dtoRequest classroom.Request
 
 	err := ctx.BodyParser(&dtoRequest)
 	if err != nil {
@@ -64,7 +65,7 @@ func (c *ClassRoomController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	var dtoRequest classroom.ClassRoomRequestDto
+	var dtoRequest classroom.Request
 	err := ctx.BodyParser(&dtoRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(

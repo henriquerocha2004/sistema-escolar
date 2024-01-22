@@ -12,5 +12,4 @@ func setRoomRoutes(app *fiber.App, container *container.ContainerDependency) {
 	room.Post("/", container.GetRoomController().Create)
 	room.Put("/:id", container.GetRoomController().Update)
 	room.Delete("/:id", container.GetRoomController().Delete)
-	room.Post("sync-schedule", container.GetRoomController().SyncSchedule)
 }

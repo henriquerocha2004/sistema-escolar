@@ -140,7 +140,7 @@ func (c *ClassRoomRepository) FindById(id string) (*classroom.ClassRoom, error) 
 		classRoomModel.Status,
 		int(classRoomModel.VacanciesOccupied),
 		int(classRoomModel.Vacancies),
-		classRoomModel.OpenDate.String(),
+		classRoomModel.OpenDate.Format("2006-01-02"),
 		classRoomModel.Shift,
 		classRoomModel.Level,
 		classRoomModel.Identification,
@@ -193,7 +193,7 @@ func (c *ClassRoomRepository) FindByIdLock(id string) (*classroom.ClassRoom, err
 
 func (c *ClassRoomRepository) FindAll(pagination paginator.Pagination) (*paginator.PaginationResult, error) {
 
-	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancelQuery := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelQuery()
 
 	query := `		
@@ -261,7 +261,7 @@ func (c *ClassRoomRepository) FindAll(pagination paginator.Pagination) (*paginat
 			classRoomModel.Status,
 			int(classRoomModel.VacanciesOccupied),
 			int(classRoomModel.Vacancies),
-			classRoomModel.OpenDate.String(),
+			classRoomModel.OpenDate.Format("2006-01-02"),
 			classRoomModel.Shift,
 			classRoomModel.Level,
 			classRoomModel.Identification,

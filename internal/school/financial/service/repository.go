@@ -9,5 +9,5 @@ type Repository interface {
 	Delete(id string) error
 	Update(service Service) error
 	FindById(id string) (*Service, error)
-	FindAll(paginator paginator.Pagination) (*paginator.ServicePaginationResult, error)
+	FindAll(paginator paginator.Pagination) (*paginator.PaginationResult, error)
 }

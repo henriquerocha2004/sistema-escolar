@@ -3,6 +3,7 @@ package schoolyear
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -44,6 +45,20 @@ func New(year string, startAt string, endAt string) (*SchoolYear, error) {
 	return sy, nil
 }
 
+func Load(id string, year string, startAt string, endAt string) (*SchoolYear, error) {
+	s, err := New(year, startAt, endAt)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.SetId(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
 func (sy *SchoolYear) ChangeSchoolYear(year string) error {
 	if year == "" {
 		return errors.New("year cannot be empty")
@@ -55,6 +70,7 @@ func (sy *SchoolYear) ChangeSchoolYear(year string) error {
 }
 
 func (sy *SchoolYear) ChangeStartAt(startAt string) error {
+	fmt.Println(startAt)
 	sa, err := time.Parse("2006-01-02", startAt)
 
 	if err != nil {

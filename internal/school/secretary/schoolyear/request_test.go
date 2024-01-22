@@ -7,7 +7,7 @@ import (
 )
 
 func TestShouldReturnErrorInValidateDto(t *testing.T) {
-	dto := SchoolYearRequestDto{
+	dto := Request{
 		Year:      "asdasdsada",
 		StartedAt: "sadsadss",
 		EndAt:     "sadsadsad",
@@ -17,8 +17,8 @@ func TestShouldReturnErrorInValidateDto(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestShouldValidateWithSucessRequestDto(t *testing.T) {
-	dto := SchoolYearRequestDto{
+func TestShouldValidateWithSuccessRequestDto(t *testing.T) {
+	dto := Request{
 		Year:      "2004",
 		StartedAt: "2022-01-01",
 		EndAt:     "2022-02-01",

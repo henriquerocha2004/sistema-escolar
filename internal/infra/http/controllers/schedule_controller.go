@@ -5,20 +5,22 @@ import (
 	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule/scheduleService"
+	"log"
 )
 
 type ScheduleController struct {
-	scheduleActions schedule.ScheduleActionsInterface
+	scheduleActions scheduleService.ServiceScheduleInterface
 }
 
-func NewScheduleController(scheduleActions schedule.ScheduleActionsInterface) *ScheduleController {
+func NewScheduleController(scheduleActions scheduleService.ServiceScheduleInterface) *ScheduleController {
 	return &ScheduleController{
 		scheduleActions: scheduleActions,
 	}
 }
 
 func (s *ScheduleController) Create(ctx *fiber.Ctx) error {
-	inputRequest := schedule.ScheduleRequestDto{}
+	inputRequest := schedule.Request{}
 	err := ctx.BodyParser(&inputRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
@@ -63,7 +65,7 @@ func (s *ScheduleController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	inputRequest := schedule.ScheduleRequestDto{}
+	inputRequest := schedule.Request{}
 	err := ctx.BodyParser(&inputRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
@@ -182,5 +184,43 @@ func (s *ScheduleController) FindAll(ctx *fiber.Ctx) error {
 		"success",
 		"",
 		schedules,
+	))
+}
+
+func (s *ScheduleController) SyncSchedule(ctx *fiber.Ctx) error {
+	roomScheduleDto := schedule.RoomScheduleDto{}
+	err := ctx.BodyParser(&roomScheduleDto)
+	if err != nil {
+		log.Println(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(
+			NewResponseDto(
+				"error",
+				"Data provided is invalid",
+				nil,
+			))
+	}
+
+	validateMessages := requestvalidator.ValidateRequest(&roomScheduleDto)
+	if validateMessages != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
+			"error",
+			"failed to validate data",
+			validateMessages,
+		))
+	}
+
+	err = s.scheduleActions.SyncSchedule(roomScheduleDto)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(NewResponseDto(
+			"error",
+			err.Error(),
+			nil,
+		))
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(NewResponseDto(
+		"success",
+		"schedule room sync with success",
+		nil,
 	))
 }

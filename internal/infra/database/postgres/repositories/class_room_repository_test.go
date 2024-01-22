@@ -2,32 +2,17 @@ package repositories
 
 import (
 	"database/sql"
+	"github.com/google/uuid"
+	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
+	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
-	"log"
-	"os"
-	"testing"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
-	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
+	"testing"
 )
-
-func init() {
-	rootProject, _ := os.Getwd()
-	err := godotenv.Load(rootProject + "/../../../../.env.test")
-	if err != nil {
-		log.Fatal("Error in read .env file")
-	}
-}
-
-var currentTime time.Time = time.Now()
 
 type TestClassRoomSuit struct {
 	suite.Suite
@@ -58,6 +43,7 @@ func (s *TestClassRoomSuit) AfterTest(suiteName, testName string) {
 }
 
 func TestManagerClassRoom(t *testing.T) {
+	testtools.StartTestEnv()
 	connection := postgres.Connect()
 	suite.Run(t, newTestClassRoomSuit(connection, testtools.NewTestDatabaseOperations(connection)))
 }
@@ -69,8 +55,8 @@ func (s *TestClassRoomSuit) TestShouldCreateClassRoom() {
 	classRoomDb, err := s.repository.FindById(classRoom.Id().String())
 	s.Assert().NotNil(classRoomDb)
 	s.Assert().NoError(err)
-	s.Assert().Equal(classRoom.Localization, classRoomDb.Localization)
-	s.Assert().Equal(classRoom.VacancyQuantity, classRoomDb.VacancyQuantity)
+	s.Assert().Equal(classRoom.Localization(), classRoomDb.Localization())
+	s.Assert().Equal(classRoom.VacancyQuantity(), classRoomDb.VacancyQuantity())
 }
 
 func (s *TestClassRoomSuit) TestShouldUpdateClassRoom() {
@@ -83,8 +69,8 @@ func (s *TestClassRoomSuit) TestShouldUpdateClassRoom() {
 	s.Assert().NoError(err)
 	classRoomDb, err := s.repository.FindById(classRoom.Id().String())
 	s.Assert().NoError(err)
-	s.Assert().Equal(classRoom.Shift, classRoomDb.Shift)
-	s.Assert().Equal(classRoom.Localization, classRoomDb.Localization)
+	s.Assert().Equal(classRoom.Shift(), classRoomDb.Shift())
+	s.Assert().Equal(classRoom.Localization(), classRoomDb.Localization())
 }
 
 func (s *TestClassRoomSuit) TestShouldDeleteClassRoom() {
@@ -123,7 +109,7 @@ func (s *TestClassRoomSuit) TestShouldFindByShift() {
 	classRoomPaginationResult, err := s.repository.FindAll(pagination)
 	result := classRoomPaginationResult.Data.([]classroom.ClassRoom)
 	s.Assert().NoError(err)
-	s.Assert().Equal(classRoom.Shift, result[0].Shift())
+	s.Assert().Equal(classRoom.Shift(), result[0].Shift())
 }
 
 func (s *TestClassRoomSuit) getSchoolYear() schoolyear.SchoolYear {
@@ -143,7 +129,7 @@ func (s *TestClassRoomSuit) getRoom() room.Room {
 }
 
 func (s *TestClassRoomSuit) getSchedule(schoolYearId uuid.UUID) schedule.ScheduleClass {
-	sh, err := schedule.New("Any Description", "08:00", "09:00", schoolYearId.String())
+	sh, err := schedule.New("Any Description", "08:00:00", "09:00:00", schoolYearId.String())
 	s.Assert().NoError(err)
 	_ = s.scheduleRepository.Create(*sh)
 

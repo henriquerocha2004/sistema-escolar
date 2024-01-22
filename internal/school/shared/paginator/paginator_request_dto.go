@@ -6,7 +6,7 @@ import (
 )
 
 type ColumnSearch struct {
-	Column string `json:"column" validate:"omitempty,allowedColumn"`
+	Column string `json:"column" validate:"omitempty"`
 	Value  string `json:"value" validate:"omitempty"`
 }
 
@@ -22,6 +22,5 @@ type PaginatorRequest struct {
 func (p *PaginatorRequest) Validate() error {
 	val := validator.New()
 	_ = val.RegisterValidation("dbOrder", requestvalidator.DbOrder)
-	_ = val.RegisterValidation("allowedColumn", requestvalidator.RoomAllowedColumnSearch)
 	return val.Struct(p)
 }

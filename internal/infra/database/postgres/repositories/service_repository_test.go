@@ -4,23 +4,12 @@ import (
 	"database/sql"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	testTools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 )
-
-func init() {
-	rootProject, _ := os.Getwd()
-	err := godotenv.Load(rootProject + "/../../../../.env.test")
-	if err != nil {
-		log.Fatal("Error in read .env file")
-	}
-}
 
 type TestServiceSuit struct {
 	suite.Suite
@@ -45,6 +34,7 @@ func (s *TestServiceSuit) AfterTest(suiteName, testName string) {
 }
 
 func TestManagerService(t *testing.T) {
+	testTools.StartTestEnv()
 	connection := postgres.Connect()
 	suite.Run(t, newTestServiceSuit(connection, testTools.NewTestDatabaseOperations(connection)))
 }
@@ -72,7 +62,7 @@ func (s *TestServiceSuit) TestShouldUpdateSchoolYear() {
 
 	serviceDb, err := s.repository.FindById(service.Id().String())
 	s.Assert().NoError(err)
-	s.Assert().Equal(service.Description, serviceDb.Description)
+	s.Assert().Equal(service.Description(), serviceDb.Description())
 }
 
 func (s *TestServiceSuit) TestShouldDeleteSchoolYear() {

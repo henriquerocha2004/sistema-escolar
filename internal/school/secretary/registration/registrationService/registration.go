@@ -11,7 +11,7 @@ import (
 )
 
 type RegistrationActionsInterface interface {
-	Create(dto registration.RegistrationDto) (*RegistrationResponse, error)
+	Create(dto registration.RequestDto) (*RegistrationResponse, error)
 }
 
 type RegistrationResponse struct {
@@ -36,7 +36,7 @@ func NewRegistrationActions(
 	}
 }
 
-func (r *RegistrationActions) Create(dto registration.RegistrationDto) (*RegistrationResponse, error) {
+func (r *RegistrationActions) Create(dto registration.RequestDto) (*RegistrationResponse, error) {
 
 	service, err := r.serviceRepo.FindById(dto.ServiceId)
 	if err != nil || service == nil {

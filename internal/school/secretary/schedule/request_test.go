@@ -7,11 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type ScenaryErrorTests struct {
-}
-
 func TestShouldReturnErrorIfTimeFormat24HoursIsInvalid(t *testing.T) {
-	scheduleRequestDto := ScheduleRequestDto{
+	scheduleRequestDto := Request{
 		InitialTime: "42:00",
 		FinalTime:   "25:00",
 		Description: "Horario",
@@ -23,7 +20,7 @@ func TestShouldReturnErrorIfTimeFormat24HoursIsInvalid(t *testing.T) {
 }
 
 func TestShouldValidateTimeFormatWithSuccess(t *testing.T) {
-	scheduleRequestDto := ScheduleRequestDto{
+	scheduleRequestDto := Request{
 		InitialTime: "08:00",
 		FinalTime:   "09:00",
 		Description: "Manha",

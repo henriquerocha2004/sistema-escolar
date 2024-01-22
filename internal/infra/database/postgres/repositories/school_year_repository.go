@@ -23,8 +23,8 @@ type SchoolYearRepository struct {
 type schoolYearSearchModel struct {
 	Id      string
 	Year    string
-	StartAt string
-	EndAt   string
+	StartAt time.Time
+	EndAt   time.Time
 	Total   int
 }
 
@@ -99,7 +99,8 @@ func (s *SchoolYearRepository) FindById(id string) (*schoolyear.SchoolYear, erro
 		return nil, err
 	}
 
-	schoolYear, err := schoolyear.New(
+	schoolYear, err := schoolyear.Load(
+		schoolYearModel.ID.String(),
 		schoolYearModel.Year,
 		schoolYearModel.StartAt.Format("2006-01-02"),
 		schoolYearModel.EndAt.Format("2006-01-02"))
@@ -162,11 +163,11 @@ func (s *SchoolYearRepository) FindAll(pagination paginator.Pagination) (*pagina
 	for rows.Next() {
 		var schoolYearSearchModel schoolYearSearchModel
 		err = rows.Scan(
-			schoolYearSearchModel.Id,
-			schoolYearSearchModel.Year,
-			schoolYearSearchModel.StartAt,
-			schoolYearSearchModel.EndAt,
-			total)
+			&schoolYearSearchModel.Id,
+			&schoolYearSearchModel.Year,
+			&schoolYearSearchModel.StartAt,
+			&schoolYearSearchModel.EndAt,
+			&total)
 		if err != nil {
 			return nil, err
 		}
@@ -179,8 +180,8 @@ func (s *SchoolYearRepository) FindAll(pagination paginator.Pagination) (*pagina
 	for _, schoolYearModel := range schoolYearsSearchModels {
 		schoolYear, err := schoolyear.New(
 			schoolYearModel.Year,
-			schoolYearModel.StartAt,
-			schoolYearModel.EndAt)
+			schoolYearModel.StartAt.Format("2006-01-02"),
+			schoolYearModel.EndAt.Format("2006-01-02"))
 
 		if err != nil {
 			return nil, err

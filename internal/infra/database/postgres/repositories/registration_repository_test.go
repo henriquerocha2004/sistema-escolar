@@ -12,20 +12,12 @@ import (
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/student"
-	"github.com/joho/godotenv"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/address"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/phone"
 	"github.com/stretchr/testify/suite"
 	"log"
-	"os"
 	"testing"
 )
-
-func init() {
-	rootProject, _ := os.Getwd()
-	err := godotenv.Load(rootProject + "/../../../../.env.test")
-	if err != nil {
-		log.Fatal("Error in read .env file")
-	}
-}
 
 type TestRegistrationSuit struct {
 	suite.Suite
@@ -60,6 +52,7 @@ func (s *TestRegistrationSuit) AfterTest(suiteName, testName string) {
 }
 
 func TestManagerRegistration(t *testing.T) {
+	testtools.StartTestEnv()
 	connection := postgres.Connect()
 	suite.Run(t, newRegistrationRoomSuit(connection, testtools.NewTestDatabaseOperations(connection)))
 }
@@ -77,12 +70,12 @@ func (s *TestRegistrationSuit) TestShouldCreateRegistration() {
 		"Souza",
 		"2001-10-15",
 		"123456789",
-		"17515874698",
+		"84731086043",
 		"teste@test.com",
 		true,
 	)
 
-	address := []registration.AddressDto{
+	add := []address.RequestDto{
 		{
 			Street:   "Rua dos Bobos",
 			City:     "SSA",
@@ -92,16 +85,16 @@ func (s *TestRegistrationSuit) TestShouldCreateRegistration() {
 		},
 	}
 
-	stdent.AddAddress(address)
+	stdent.AddAddress(add)
 
-	phone := []registration.PhoneDto{
+	p := []phone.RequestDto{
 		{
 			Description: "Pessoal",
 			Phone:       "71589955554",
 		},
 	}
 
-	stdent.AddPhones(phone)
+	stdent.AddPhones(p)
 
 	reg, err := registration.New(
 		classroom,
@@ -143,7 +136,7 @@ func (s *TestRegistrationSuit) createRoom() uuid.UUID {
 }
 
 func (s *TestRegistrationSuit) createSchedule(schoolYearId uuid.UUID) uuid.UUID {
-	sch, _ := schedule.New("Any Description", "08:00", "09:00", schoolYearId.String())
+	sch, _ := schedule.New("Any Description", "08:00:00", "09:00:00", schoolYearId.String())
 
 	err := s.scheduleRepository.Create(*sch)
 	if err != nil {

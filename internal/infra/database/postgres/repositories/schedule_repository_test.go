@@ -8,21 +8,10 @@ import (
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
-	"log"
-	"os"
 	"testing"
 
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 )
-
-func init() {
-	rootProject, _ := os.Getwd()
-	err := godotenv.Load(rootProject + "/../../../../.env.test")
-	if err != nil {
-		log.Fatal("Error in read .env file")
-	}
-}
 
 type TestScheduleRoomSuit struct {
 	suite.Suite
@@ -49,13 +38,14 @@ func (s *TestScheduleRoomSuit) AfterTest(suiteName, testName string) {
 }
 
 func TestManagerScheduleRoom(t *testing.T) {
+	testtools.StartTestEnv()
 	connection := postgres.Connect()
 	suite.Run(t, newTestScheduleRunRepository(connection, testtools.NewTestDatabaseOperations(connection)))
 }
 
 func (s *TestScheduleRoomSuit) TestShouldCreateSchedule() {
 	sY := s.getSchoolYear()
-	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
+	sch, err := schedule.New("Any Description", "08:00:00", "09:00:00", sY.Id().String())
 
 	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
@@ -63,12 +53,12 @@ func (s *TestScheduleRoomSuit) TestShouldCreateSchedule() {
 
 func (s *TestScheduleRoomSuit) TestShouldUpdateSchedule() {
 	sY := s.getSchoolYear()
-	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
+	sch, err := schedule.New("Any Description", "08:00:00", "09:00:00", sY.Id().String())
 
 	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
 
-	err = sch.ChangePeriod("10:00", "11:00")
+	err = sch.ChangePeriod("10:00:00", "11:00:00")
 	s.Assert().NoError(err)
 	err = s.repository.Update(*sch)
 	s.Assert().NoError(err)
@@ -82,7 +72,7 @@ func (s *TestScheduleRoomSuit) TestShouldUpdateSchedule() {
 func (s *TestScheduleRoomSuit) TestShouldDeleteScheduleRoom() {
 
 	sY := s.getSchoolYear()
-	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
+	sch, err := schedule.New("Any Description", "08:00:00", "09:00:00", sY.Id().String())
 
 	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
@@ -99,7 +89,7 @@ func (s *TestScheduleRoomSuit) TestShouldDeleteScheduleRoom() {
 func (s *TestScheduleRoomSuit) TestShouldFindByDescription() {
 
 	sY := s.getSchoolYear()
-	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
+	sch, err := schedule.New("Any Description", "08:00:00", "09:00:00", sY.Id().String())
 
 	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)
@@ -115,13 +105,13 @@ func (s *TestScheduleRoomSuit) TestShouldFindByDescription() {
 	schedulePaginationResult, err := s.repository.FindAll(pagination)
 	s.Assert().NoError(err)
 	data := schedulePaginationResult.Data.([]schedule.ScheduleClass)
-	s.Assert().Equal(sch.Description(), data[0].Description)
+	s.Assert().Equal(sch.Description(), data[0].Description())
 }
 
 func (s *TestScheduleRoomSuit) TestShouldFindScheduleById() {
 	sY := s.getSchoolYear()
 
-	sch, err := schedule.New("Any Description", "08:00", "09:00", sY.Id().String())
+	sch, err := schedule.New("Any Description", "08:00:00", "09:00:00", sY.Id().String())
 
 	err = s.repository.Create(*sch)
 	s.Assert().NoError(err)

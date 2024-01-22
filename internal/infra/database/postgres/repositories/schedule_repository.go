@@ -111,8 +111,8 @@ func (s *ScheduleRoomRepository) FindById(id string) (*schedule.ScheduleClass, e
 	schedule, err := schedule.Load(
 		scheduleModel.ScheduleID.String(),
 		scheduleModel.Description,
-		scheduleModel.StartAt.Format("15:01:05"),
-		scheduleModel.EndAt.Format("15:01:05"),
+		scheduleModel.StartAt.Format("15:04:05"),
+		scheduleModel.EndAt.Format("15:04:05"),
 		scheduleModel.ID.String(),
 	)
 
@@ -120,7 +120,7 @@ func (s *ScheduleRoomRepository) FindById(id string) (*schedule.ScheduleClass, e
 }
 
 func (s *ScheduleRoomRepository) FindAll(pagination paginator.Pagination) (*paginator.PaginationResult, error) {
-	ctx, cancelQuery := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancelQuery := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelQuery()
 
 	query := `SELECT 
@@ -239,5 +239,5 @@ func (r *ScheduleRoomRepository) SyncSchedule(scheduleDto schedule.RoomScheduleD
 }
 
 func (s *ScheduleRoomRepository) parseToTime(t string) (time.Time, error) {
-	return time.Parse("15:01:05", t)
+	return time.Parse("15:04:05", t)
 }

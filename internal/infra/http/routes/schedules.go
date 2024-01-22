@@ -12,4 +12,5 @@ func setSchedulesRoutes(app *fiber.App, container *container.ContainerDependency
 	schedules.Post("/", container.GetScheduleRoomController().Create)
 	schedules.Put("/:id", container.GetScheduleRoomController().Update)
 	schedules.Delete("/:id", container.GetScheduleRoomController().Delete)
+	schedules.Post("sync-schedule", container.GetScheduleRoomController().SyncSchedule)
 }

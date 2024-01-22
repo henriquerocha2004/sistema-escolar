@@ -9,20 +9,9 @@ import (
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
-	"log"
-	"os"
 	"testing"
 )
-
-func init() {
-	rootProject, _ := os.Getwd()
-	err := godotenv.Load(rootProject + "/../../../../.env.test")
-	if err != nil {
-		log.Fatal("Error in read .env file")
-	}
-}
 
 type TestRoomSuit struct {
 	suite.Suite
@@ -57,6 +46,7 @@ func (s *TestRoomSuit) TearDownSuite() {
 }
 
 func TestManagerRoom(t *testing.T) {
+	testtools.StartTestEnv()
 	connection := postgres.Connect()
 	suite.Run(t, newTestRoomSuit(connection, testtools.NewTestDatabaseOperations(connection)))
 }
@@ -85,7 +75,7 @@ func (s *TestRoomSuit) TestShouldUpdateRoom() {
 	roomDb, err := s.repository.FindById(room.Id().String())
 	s.Assert().NoError(err)
 	s.Assert().NotNil(roomDb)
-	s.Assert().Equal(room.Id, roomDb.Id)
+	s.Assert().Equal(room.Id(), roomDb.Id())
 }
 
 func (s *TestRoomSuit) TestShouldDeleteRoom() {
@@ -131,7 +121,7 @@ func (s *TestRoomSuit) TestShouldFindByCode() {
 
 	roomDB, err := s.repository.FindByCode(r.Code())
 	s.Assert().NoError(err)
-	s.Assert().Equal(r.Code(), roomDB.Code)
+	s.Assert().Equal(r.Code(), roomDB.Code())
 }
 
 func (s *TestRoomSuit) TestShouldSyncSchedule() {
@@ -146,7 +136,7 @@ func (s *TestRoomSuit) TestShouldSyncSchedule() {
 
 	_ = s.schoolYearRepository.Create(schoolYear)
 
-	sch, err := schedule.New("Any description", "08:00", "09:00", schoolYear.Id().String())
+	sch, err := schedule.New("Any description", "08:00:00", "09:00:00", schoolYear.Id().String())
 	s.Assert().NoError(err)
 
 	_ = s.scheduleRepository.Create(*sch)

@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	requestvalidator "github.com/henriquerocha2004/sistema-escolar/internal/infra/http/request_validator"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
-	"github.com/henriquerocha2004/sistema-escolar/internal/presenters"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear/schoolYearService"
 	"log"
@@ -21,7 +20,7 @@ func NewSchoolYearController(actions schoolYearService.SchoolYearActionsInterfac
 }
 
 func (s *SchoolYearController) Create(ctx *fiber.Ctx) error {
-	requestDto := schoolyear.SchoolYearRequestDto{}
+	requestDto := schoolyear.Request{}
 	err := ctx.BodyParser(&requestDto)
 	if err != nil {
 		log.Println(err)
@@ -68,7 +67,7 @@ func (s *SchoolYearController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	var inputDto schoolyear.SchoolYearRequestDto
+	var inputDto schoolyear.Request
 	err := ctx.BodyParser(&inputDto)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
@@ -149,12 +148,10 @@ func (s *SchoolYearController) Find(ctx *fiber.Ctx) error {
 		))
 	}
 
-	presenter := presenters.WebSchoolYearPresenter{}
-
 	return ctx.Status(fiber.StatusOK).JSON(NewResponseDto(
 		"success",
 		"",
-		presenter.FillSingleSchoolYearPresenter(*schoolYear),
+		schoolYear,
 	))
 }
 
@@ -186,11 +183,9 @@ func (s *SchoolYearController) FindAll(ctx *fiber.Ctx) error {
 		))
 	}
 
-	presenter := presenters.WebSchoolYearPresenter{}
-
 	return ctx.Status(fiber.StatusOK).JSON(NewResponseDto(
 		"success",
 		"",
-		presenter.FillMultipleSchoolYearPresenter(*schoolYears),
+		*schoolYears,
 	))
 }

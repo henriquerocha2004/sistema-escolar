@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/parent"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/registration"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/address"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/phone"
 	"log"
 
 	"time"
@@ -192,7 +193,7 @@ func (s *Student) ChangeName(firstName string, lastName string) error {
 	return nil
 }
 
-func (s *Student) AddAddress(addressDto []registration.AddressDto) {
+func (s *Student) AddAddress(addressDto []address.RequestDto) {
 
 	var addresses []value_objects.Address
 
@@ -215,7 +216,7 @@ func (s *Student) AddAddress(addressDto []registration.AddressDto) {
 	s.addresses = addresses
 }
 
-func (s *Student) AddPhones(phonesDto []registration.PhoneDto) {
+func (s *Student) AddPhones(phonesDto []phone.RequestDto) {
 
 	var phones []value_objects.Phone
 
@@ -233,7 +234,7 @@ func (s *Student) AddPhones(phonesDto []registration.PhoneDto) {
 	s.phones = phones
 }
 
-func (s *Student) AddParents(parentsDto []registration.ParentDto) error {
+func (s *Student) AddParents(parentsDto []parent.RequestDto) error {
 
 	var parents []parent.Parent
 

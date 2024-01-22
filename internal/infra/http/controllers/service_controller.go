@@ -11,17 +11,17 @@ import (
 )
 
 type ServiceController struct {
-	serviceActions serviceActions.ServiceActionsInterface
+	serviceActions serviceActions.ActionsServiceInterface
 }
 
-func NewServiceController(serviceActions serviceActions.ServiceActionsInterface) *ServiceController {
+func NewServiceController(serviceActions serviceActions.ActionsServiceInterface) *ServiceController {
 	return &ServiceController{
 		serviceActions: serviceActions,
 	}
 }
 
 func (s *ServiceController) Create(ctx *fiber.Ctx) error {
-	requestDto := service.ServiceRequestDto{}
+	requestDto := service.Request{}
 	err := ctx.BodyParser(&requestDto)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
@@ -66,7 +66,7 @@ func (s *ServiceController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	var inputDto service.ServiceRequestDto
+	var inputDto service.Request
 	err := ctx.BodyParser(&inputDto)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(

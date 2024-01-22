@@ -19,7 +19,7 @@ func NewRegisterController(regActions registrationService.RegistrationActionsInt
 }
 
 func (r *RegisterController) Create(ctx *fiber.Ctx) error {
-	var registerDto registration.RegistrationDto
+	var registerDto registration.RequestDto
 
 	err := ctx.BodyParser(&registerDto)
 	if err != nil {

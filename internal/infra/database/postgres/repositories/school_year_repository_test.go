@@ -2,27 +2,13 @@ package repositories
 
 import (
 	"database/sql"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
-	"log"
-	"os"
-	"testing"
-	"time"
-
-	"github.com/google/uuid"
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres"
 	testtools "github.com/henriquerocha2004/sistema-escolar/internal/infra/database/postgres/test-tools"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities"
-	"github.com/joho/godotenv"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schoolyear"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/paginator"
 	"github.com/stretchr/testify/suite"
+	"testing"
 )
-
-func init() {
-	rootProject, _ := os.Getwd()
-	err := godotenv.Load(rootProject + "/../../../../.env.test")
-	if err != nil {
-		log.Fatal("Error in read .env file")
-	}
-}
 
 type TestSchoolYearSuit struct {
 	suite.Suite
@@ -47,70 +33,61 @@ func (s *TestSchoolYearSuit) AfterTest(suiteName, testName string) {
 }
 
 func TestManagerSchoolYear(t *testing.T) {
+	testtools.StartTestEnv()
 	connection := postgres.Connect()
 	suite.Run(t, newTestSchoolYearSuit(connection, testtools.NewTestDatabaseOperations(connection)))
 }
 
 func (s *TestSchoolYearSuit) TestShouldCreateSchoolYear() {
+	sYear, err := schoolyear.New(
+		"2001",
+		"2001-01-01",
+		"2001-12-30",
+	)
+	s.Assert().NoError(err)
 
-	startAt, _ := time.Parse("2006-02-02", "2001-01-01")
-	endAt, _ := time.Parse("2006-02-02", "2001-12-30")
-
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2001",
-		StartedAt: &startAt,
-		EndAt:     &endAt,
-	}
-
-	err := s.repository.Create(schoolYear)
+	err = s.repository.Create(sYear)
 	s.Assert().NoError(err)
 }
 
 func (s *TestSchoolYearSuit) TestShouldUpdateSchoolYear() {
-	startAt, _ := time.Parse("2006-02-02", "2001-01-01")
-	endAt, _ := time.Parse("2006-02-02", "2001-12-30")
-
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2001",
-		StartedAt: &startAt,
-		EndAt:     &endAt,
-	}
-
-	err := s.repository.Create(schoolYear)
+	sYear, err := schoolyear.New(
+		"2001",
+		"2001-01-01",
+		"2001-12-30",
+	)
 	s.Assert().NoError(err)
 
-	schoolYear.Year = "2002"
-	err = s.repository.Update(schoolYear)
+	err = s.repository.Create(sYear)
 	s.Assert().NoError(err)
 
-	schoolYearDb, err := s.repository.FindById(schoolYear.Id.String())
+	_ = sYear.ChangeSchoolYear("2002")
+	err = s.repository.Update(sYear)
+	s.Assert().NoError(err)
+
+	schoolYearDb, err := s.repository.FindById(sYear.Id().String())
 	s.Assert().NoError(err)
 	s.Assert().NotNil(schoolYearDb)
-	s.Assert().Equal(schoolYear.Id, schoolYearDb.Id)
-	s.Assert().Equal(schoolYear.Year, schoolYearDb.Year)
+	s.Assert().Equal(sYear.Id(), schoolYearDb.Id())
+	s.Assert().Equal(sYear.Year(), schoolYearDb.Year())
 }
 
 func (s *TestSchoolYearSuit) TestShouldDeleteSchoolYear() {
 
-	startAt, _ := time.Parse("2006-02-02", "2001-01-01")
-	endAt, _ := time.Parse("2006-02-02", "2001-12-30")
-
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2001",
-		StartedAt: &startAt,
-		EndAt:     &endAt,
-	}
-
-	err := s.repository.Create(schoolYear)
+	sYear, err := schoolyear.New(
+		"2001",
+		"2001-01-01",
+		"2001-12-30",
+	)
 	s.Assert().NoError(err)
 
-	err = s.repository.Delete(schoolYear.Id.String())
+	err = s.repository.Create(sYear)
 	s.Assert().NoError(err)
 
-	schoolYearDb, err := s.repository.FindById(schoolYear.Id.String())
+	err = s.repository.Delete(sYear.Id().String())
+	s.Assert().NoError(err)
+
+	schoolYearDb, err := s.repository.FindById(sYear.Id().String())
 	s.Assert().Error(err)
 	s.Assert().Equal("sql: no rows in result set", err.Error())
 	s.Assert().Nil(schoolYearDb)
@@ -118,17 +95,14 @@ func (s *TestSchoolYearSuit) TestShouldDeleteSchoolYear() {
 
 func (s *TestSchoolYearSuit) TestShouldFindSchoolYearById() {
 
-	startAt, _ := time.Parse("2006-02-02", "2001-01-01")
-	endAt, _ := time.Parse("2006-02-02", "2001-12-30")
+	sYear, err := schoolyear.New(
+		"2001",
+		"2001-01-01",
+		"2001-12-30",
+	)
+	s.Assert().NoError(err)
 
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2001",
-		StartedAt: &startAt,
-		EndAt:     &endAt,
-	}
-
-	err := s.repository.Create(schoolYear)
+	err = s.repository.Create(sYear)
 	s.Assert().NoError(err)
 
 	paginator := paginator.Pagination{}
@@ -139,24 +113,21 @@ func (s *TestSchoolYearSuit) TestShouldFindSchoolYearById() {
 
 	paginationResult, err := s.repository.FindAll(paginator)
 	s.Assert().NoError(err)
-	s.Assert().Equal(1, len(paginationResult.SchoolYears))
+	s.Assert().Equal(1, len(paginationResult.Data.([]schoolyear.SchoolYear)))
 }
 
 func (s *TestSchoolYearSuit) TestShouldFindSchoolYearByYear() {
-	startAt, _ := time.Parse("2006-02-02", "2001-01-01")
-	endAt, _ := time.Parse("2006-02-02", "2001-12-30")
-
-	schoolYear := entities.SchoolYear{
-		Id:        uuid.New(),
-		Year:      "2001",
-		StartedAt: &startAt,
-		EndAt:     &endAt,
-	}
-
-	err := s.repository.Create(schoolYear)
+	sYear, err := schoolyear.New(
+		"2001",
+		"2001-01-01",
+		"2001-12-30",
+	)
 	s.Assert().NoError(err)
 
-	schoolYearDb, err := s.repository.FindByYear(schoolYear.Year)
+	err = s.repository.Create(sYear)
 	s.Assert().NoError(err)
-	s.Assert().Equal(schoolYear.Year, schoolYearDb.Year)
+
+	schoolYearDb, err := s.repository.FindByYear(sYear.Year())
+	s.Assert().NoError(err)
+	s.Assert().Equal(sYear.Year(), schoolYearDb.Year())
 }

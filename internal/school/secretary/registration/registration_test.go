@@ -1,14 +1,16 @@
 package registration
 
 import (
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities/parent"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities/service"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/entities/student"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/financial/service"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/classroom"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/parent"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/student"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/address"
+	"github.com/henriquerocha2004/sistema-escolar/internal/school/shared/phone"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/henriquerocha2004/sistema-escolar/internal/school/value_objects"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,157 +19,119 @@ func TestForValidateStudentInRegistration(t *testing.T) {
 	service := getService()
 	classRoom := getClassRoom()
 
-	enrollmentDate := time.Now()
-	enrollmentDueDate, _ := time.Parse("2006-02-02", inputData.EnrollmentDueDate)
-
 	t.Run("should return error when student is not him self responsible but not provided parents information", func(t *testing.T) {
-		student := getStudent(inputData)
-		student.Parents = []parent.Parent{}
-		student.HimSelfResponsible = false
+		data := inputData
+		data.Student.Parents = []parent.RequestDto{}
+		stdt := getStudent(data)
+		stdt.ChangeHimSelfResponsible(false)
 
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           inputData.MonthlyFee,
-			InstallmentsQuantity: inputData.InstallmentsQuantity,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift(inputData.Shift),
-			EnrollmentDueDate:    &enrollmentDueDate,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
+		reg, err := New(
+			classRoom,
+			inputData.Shift,
+			stdt,
+			service,
+			inputData.MonthlyFee,
+			inputData.InstallmentsQuantity,
+			inputData.EnrollmentFee,
+			inputData.EnrollmentDueDate,
+			inputData.MonthDuration,
+			inputData.PaymentDay,
+		)
 
-		err := registration.Check()
+		err = reg.Check()
 		assert.Error(t, err)
 		assert.Equal(t, "information about student parents not found", err.Error())
 
 	})
 
-	t.Run("should return error if cpf document is invalid", func(t *testing.T) {
-		student := getStudent(inputData)
-		student.CPFDocument = "145885566998"
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           inputData.MonthlyFee,
-			InstallmentsQuantity: inputData.InstallmentsQuantity,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift(inputData.Shift),
-			EnrollmentDueDate:    &enrollmentDueDate,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
-
-		err := registration.Check()
-		assert.Error(t, err)
-		assert.Equal(t, "invalid cpf", err.Error())
-	})
-
 	t.Run("should return error if student is responsible himself but not provided phone information", func(t *testing.T) {
-		student := getStudent(inputData)
-		student.Phones = []value_objects.Phone{}
+		data := inputData
+		data.Student.Phones = []phone.RequestDto{}
+		stdt := getStudent(data)
+		reg, err := New(
+			classRoom,
+			inputData.Shift,
+			stdt,
+			service,
+			inputData.MonthlyFee,
+			inputData.InstallmentsQuantity,
+			inputData.EnrollmentFee,
+			inputData.EnrollmentDueDate,
+			inputData.MonthDuration,
+			inputData.PaymentDay,
+		)
 
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           inputData.MonthlyFee,
-			InstallmentsQuantity: inputData.InstallmentsQuantity,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift(inputData.Shift),
-			EnrollmentDueDate:    &enrollmentDueDate,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
-
-		err := registration.Check()
+		err = reg.Check()
 		assert.Error(t, err)
 		assert.Equal(t, "phone information not found", err.Error())
 	})
 
 	t.Run("should return error if student is responsible himself but not provided address information", func(t *testing.T) {
-		student := getStudent(inputData)
-		student.Addresses = []value_objects.Address{}
+		data := createInputData()
+		data.Student.Addresses = []address.RequestDto{}
+		student := getStudent(data)
+		reg, err := New(
+			classRoom,
+			inputData.Shift,
+			student,
+			service,
+			inputData.MonthlyFee,
+			inputData.InstallmentsQuantity,
+			inputData.EnrollmentFee,
+			inputData.EnrollmentDueDate,
+			inputData.MonthDuration,
+			inputData.PaymentDay,
+		)
 
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           inputData.MonthlyFee,
-			InstallmentsQuantity: inputData.InstallmentsQuantity,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift(inputData.Shift),
-			EnrollmentDueDate:    &enrollmentDueDate,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
-
-		err := registration.Check()
+		err = reg.Check()
 		assert.Error(t, err)
 		assert.Equal(t, "address information not found", err.Error())
 	})
 
 	t.Run("should return error if student is not himself responsible but not provided parents address information", func(t *testing.T) {
-		student := getStudent(inputData)
-		student.Parents[0].Addresses = []value_objects.Address{}
-		student.HimSelfResponsible = false
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           inputData.MonthlyFee,
-			InstallmentsQuantity: inputData.InstallmentsQuantity,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift(inputData.Shift),
-			EnrollmentDueDate:    &enrollmentDueDate,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
+		data := createInputData()
+		data.Student.Parents[0].Addresses = []address.RequestDto{}
+		student := getStudent(data)
+		student.ChangeHimSelfResponsible(false)
+		err := student.AddParents(data.Student.Parents)
+		reg, err := New(
+			classRoom,
+			inputData.Shift,
+			student,
+			service,
+			inputData.MonthlyFee,
+			inputData.InstallmentsQuantity,
+			inputData.EnrollmentFee,
+			inputData.EnrollmentDueDate,
+			inputData.MonthDuration,
+			inputData.PaymentDay,
+		)
 
-		err := registration.Check()
+		err = reg.Check()
 		assert.Error(t, err)
 		assert.Equal(t, "parent address information not found", err.Error())
 
 	})
 
 	t.Run("should return error if student is not himself responsible but not provided phone parents information", func(t *testing.T) {
-		student := getStudent(inputData)
-		student.Parents[0].Phones = []value_objects.Phone{}
-		student.HimSelfResponsible = false
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           inputData.MonthlyFee,
-			InstallmentsQuantity: inputData.InstallmentsQuantity,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift(inputData.Shift),
-			EnrollmentDueDate:    &enrollmentDueDate,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
+		data := inputData
+		data.Student.Parents[0].Phones = []phone.RequestDto{}
+		student := getStudent(data)
+		student.ChangeHimSelfResponsible(false)
+		reg, err := New(
+			classRoom,
+			inputData.Shift,
+			student,
+			service,
+			inputData.MonthlyFee,
+			inputData.InstallmentsQuantity,
+			inputData.EnrollmentFee,
+			inputData.EnrollmentDueDate,
+			inputData.MonthDuration,
+			inputData.PaymentDay,
+		)
 
-		err := registration.Check()
+		err = reg.Check()
 		assert.Error(t, err)
 		assert.Equal(t, "parent phone not found", err.Error())
 	})
@@ -177,128 +141,114 @@ func TestRegistrationValidation(t *testing.T) {
 	inputData := createInputData()
 	service := getService()
 	classRoom := getClassRoom()
-
-	enrollmentDate := time.Now()
-	enrollmentDueDate, _ := time.Parse("2006-02-02", "2023-01-01")
 	student := getStudent(inputData)
 
 	t.Run("should return error if shift informed is invalid", func(t *testing.T) {
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           inputData.MonthlyFee,
-			InstallmentsQuantity: inputData.InstallmentsQuantity,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift("INVALID"),
-			EnrollmentDueDate:    &enrollmentDueDate,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
-
-		err := registration.Check()
+		reg, err := New(
+			classRoom,
+			"Invalid",
+			student,
+			service,
+			inputData.MonthlyFee,
+			inputData.InstallmentsQuantity,
+			inputData.EnrollmentFee,
+			inputData.EnrollmentDueDate,
+			inputData.MonthDuration,
+			inputData.PaymentDay,
+		)
+		assert.Nil(t, reg)
 		assert.Error(t, err)
 		assert.Equal(t, "invalid shift provided", err.Error())
 	})
 
 	t.Run("should return error if enrollment due date is after than current date", func(t *testing.T) {
 
-		enrollmentDueDateBefore := time.Now().AddDate(0, 0, -2)
+		enrollmentDueDateBefore := time.Now().AddDate(0, 0, -2).Format("2006-01-02")
 
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           inputData.MonthlyFee,
-			InstallmentsQuantity: inputData.InstallmentsQuantity,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift(inputData.Shift),
-			EnrollmentDueDate:    &enrollmentDueDateBefore,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
+		reg, err := New(
+			classRoom,
+			inputData.Shift,
+			student,
+			service,
+			inputData.MonthlyFee,
+			inputData.InstallmentsQuantity,
+			inputData.EnrollmentFee,
+			enrollmentDueDateBefore,
+			inputData.MonthDuration,
+			inputData.PaymentDay,
+		)
 
-		err := registration.Check()
+		err = reg.Check()
+
 		assert.Error(t, err)
 		assert.Equal(t, "enrollment due date cant be before today", err.Error())
 	})
 
 	t.Run("should return error if installments total is less than total service", func(t *testing.T) {
-		service.Price = 400.00
-		enrollmentDueDate := time.Now().AddDate(0, 0, 2)
-		registration := Registration{
-			Class:                classRoom,
-			Service:              service,
-			Student:              student,
-			MonthlyFee:           200.00,
-			InstallmentsQuantity: 1,
-			EnrollmentFee:        inputData.EnrollmentFee,
-			Shift:                value_objects.Shift(inputData.Shift),
-			EnrollmentDueDate:    &enrollmentDueDate,
-			EnrollmentDate:       &enrollmentDate,
-			MonthDuration:        inputData.MonthDuration,
-			PaymentDay:           inputData.PaymentDay,
-			Paid:                 false,
-			Id:                   uuid.New(),
-		}
+		_ = service.ChangePrice(5000.00)
+		enrollmentDueDate := time.Now().AddDate(0, 0, 2).Format("2006-01-02")
+		reg, err := New(
+			classRoom,
+			inputData.Shift,
+			student,
+			service,
+			inputData.MonthlyFee,
+			inputData.InstallmentsQuantity,
+			inputData.EnrollmentFee,
+			enrollmentDueDate,
+			inputData.MonthDuration,
+			inputData.PaymentDay,
+		)
 
-		err := registration.Check()
+		err = reg.Check()
 		assert.Error(t, err)
 		assert.Equal(t, "total paid not match with service price", err.Error())
 	})
 }
 
 func getService() service.Service {
-	return service.Service{
-		Id:          uuid.New(),
-		Description: "Ensino Fundamental",
-		Price:       5000.00,
-	}
+	svc, _ := service.New("Ensino Fundamental", 5000.00)
+	return *svc
 }
 
-func getClassRoom() ClassRoom {
+func getClassRoom() classroom.ClassRoom {
 
-	now := time.Now()
+	clr, _ := classroom.New(
+		10,
+		"morning",
+		"Jardim",
+		"TUR-001",
+		uuid.New().String(),
+		uuid.New().String(),
+		uuid.New().String(),
+		"ANY",
+		"remote",
+	)
 
-	return ClassRoom{
-		Id:              uuid.New(),
-		VacancyQuantity: 10,
-		Shift:           "morning",
-		OpenDate:        &now,
-		OccupiedVacancy: 3,
-		Status:          "OPEN",
-		Identification:  "TUR-001",
-		SchoolYearId:    uuid.New(),
-		Level:           "Jardim",
-		RoomId: uuid.NullUUID{
-			UUID:  uuid.New(),
-			Valid: true,
-		},
-		ScheduleId:   uuid.New(),
-		Localization: "ANY",
-		Type:         "remote",
-	}
+	return *clr
 }
 
-func getStudent(inputData RegistrationDto) student.Student {
-	student := student.Student{}
-	student.FillFromDto(inputData.Student)
-	student.AddPhones(inputData.Student.Phones)
-	student.AddAddress(inputData.Student.Addresses)
-	student.AddParent(inputData.Student.Parents)
+func getStudent(inputData RequestDto) student.Student {
+	std, _ := student.New(
+		inputData.Student.FirstName,
+		inputData.Student.LastName,
+		inputData.Student.Birthday,
+		inputData.Student.RgDocument,
+		inputData.Student.CpfDocument,
+		inputData.Student.Email,
+		inputData.Student.HimSelfResponsible,
+	)
 
-	return student
+	std.AddPhones(inputData.Student.Phones)
+	std.AddAddress(inputData.Student.Addresses)
+	_ = std.AddParents(inputData.Student.Parents)
+
+	return *std
 }
 
-func createInputData() RegistrationDto {
+func createInputData() RequestDto {
 
-	addresses := []AddressDto{
+	addresses := []address.RequestDto{
 		{
 			Street:   "Rua dos Bobos",
 			City:     "Marbule",
@@ -308,14 +258,14 @@ func createInputData() RegistrationDto {
 		},
 	}
 
-	phones := []PhoneDto{
+	phones := []phone.RequestDto{
 		{
 			Description: "Pessoal",
 			Phone:       "7199542-3264",
 		},
 	}
 
-	parents := []ParentDto{
+	parents := []parent.RequestDto{
 		{
 			FirstName:   "Marcha",
 			LastName:    "Marbule",
@@ -324,10 +274,11 @@ func createInputData() RegistrationDto {
 			Phones:      phones,
 			RgDocument:  "745698885",
 			CpfDocument: "624.499.720-48",
+			Email:       "parent@mail.com",
 		},
 	}
 
-	student := StudentDto{
+	student := student.RequestDto{
 		FirstName:          "Henrique",
 		LastName:           "Rocha",
 		Birthday:           "1987-09-21",
@@ -340,7 +291,7 @@ func createInputData() RegistrationDto {
 		Parents:            parents,
 	}
 
-	registration := RegistrationDto{
+	registration := RequestDto{
 		ClassRoomId:          "76d0f9b7-3d7d-4cfc-892a-94c0704b4deb",
 		Shift:                "morning",
 		Student:              student,
@@ -348,7 +299,7 @@ func createInputData() RegistrationDto {
 		MonthlyFee:           400.00,
 		InstallmentsQuantity: 12,
 		EnrollmentFee:        60.00,
-		EnrollmentDueDate:    "2023-08-30",
+		EnrollmentDueDate:    time.Now().Format("2006-01-02"),
 		MonthDuration:        12,
 		PaymentDay:           "16",
 	}

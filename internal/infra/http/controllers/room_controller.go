@@ -6,22 +6,21 @@ import (
 	"github.com/henriquerocha2004/sistema-escolar/internal/infra/parsers"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room"
 	"github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/room/roomService"
-	dto2 "github.com/henriquerocha2004/sistema-escolar/internal/school/secretary/schedule"
 	"log"
 )
 
 type RoomController struct {
-	roomActions roomService.RoomActionsInterface
+	roomActions roomService.ServiceRoomInterface
 }
 
-func NewRoomController(roomActions roomService.RoomActionsInterface) *RoomController {
+func NewRoomController(roomActions roomService.ServiceRoomInterface) *RoomController {
 	return &RoomController{
 		roomActions: roomActions,
 	}
 }
 
 func (r *RoomController) Create(ctx *fiber.Ctx) error {
-	var requestDto room.RoomRequestDto
+	var requestDto room.Request
 	err := ctx.BodyParser(&requestDto)
 	if err != nil {
 		log.Println(err)
@@ -70,7 +69,7 @@ func (r *RoomController) Update(ctx *fiber.Ctx) error {
 		))
 	}
 
-	var inputDto room.RoomRequestDto
+	var inputDto room.Request
 	err := ctx.BodyParser(&inputDto)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
@@ -190,43 +189,5 @@ func (r *RoomController) FindAll(ctx *fiber.Ctx) error {
 		"success",
 		"",
 		rooms,
-	))
-}
-
-func (r *RoomController) SyncSchedule(ctx *fiber.Ctx) error {
-	roomScheduleDto := dto2.RoomScheduleDto{}
-	err := ctx.BodyParser(&roomScheduleDto)
-	if err != nil {
-		log.Println(err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(
-			NewResponseDto(
-				"error",
-				"Data provided is invalid",
-				nil,
-			))
-	}
-
-	validateMessages := requestvalidator.ValidateRequest(&roomScheduleDto)
-	if validateMessages != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(NewResponseDto(
-			"error",
-			"failed to validate data",
-			validateMessages,
-		))
-	}
-
-	err = r.roomActions.SyncSchedule(roomScheduleDto)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(NewResponseDto(
-			"error",
-			err.Error(),
-			nil,
-		))
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(NewResponseDto(
-		"success",
-		"schedule room sync with success",
-		nil,
 	))
 }
